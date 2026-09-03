@@ -11,12 +11,14 @@ import {
   Globe,
   Brain,
   Rocket,
-  Sparkles,
+  Wrench,
   Menu,
   X,
   LogOut,
   Search,
   ChevronRight,
+  Shield,
+  LayoutGrid,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,7 +47,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Globe,
   Brain,
   Rocket,
-  Sparkles,
+  Wrench,
 };
 
 function ToolIcon({ name, className }: { name: string; className?: string }) {
@@ -76,14 +78,6 @@ export default function Dashboard() {
 
   const goBack = () => setActiveTool(null);
 
-  const filteredTools = getToolsByCategory(
-    activeCategory === "all" ? "pdf" : activeCategory,
-  ).filter(
-    (t) =>
-      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.description.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
   const allFilteredTools = searchQuery
     ? categories
         .flatMap((c) => getToolsByCategory(c.id))
@@ -104,23 +98,23 @@ export default function Dashboard() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSidebarOpen(false)}
-            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
           />
         )}
       </AnimatePresence>
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border/60 bg-card transition-transform duration-200 lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border/60 bg-sidebar transition-transform duration-200 lg:static lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Brand */}
         <div className="flex h-16 items-center gap-2.5 border-b border-border/60 px-5">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
-            <Sparkles className="size-4 text-primary-foreground" />
+          <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Wrench className="size-4" />
           </div>
-          <span className="text-base font-bold tracking-tight">ToolHub</span>
+          <span className="text-base font-bold tracking-tight">Tool Hub</span>
           <Button
             variant="ghost"
             size="icon"
@@ -147,7 +141,7 @@ export default function Dashboard() {
                   : "text-muted-foreground hover:bg-accent hover:text-foreground"
               }`}
             >
-              <Search className="size-4" />
+              <LayoutGrid className="size-4" />
               All Tools
             </button>
 
@@ -156,7 +150,7 @@ export default function Dashboard() {
               const catTools = getToolsByCategory(cat.id);
               return (
                 <div key={cat.id}>
-                  <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                  <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                     {cat.label}
                   </p>
                   <div className="space-y-0.5">
@@ -169,11 +163,14 @@ export default function Dashboard() {
                           activeTool?.id === tool.id
                             ? "bg-primary/10 font-medium text-primary"
                             : tool.comingSoon
-                              ? "cursor-default text-muted-foreground/50"
+                              ? "cursor-default text-muted-foreground/40"
                               : "text-muted-foreground hover:bg-accent hover:text-foreground"
                         }`}
                       >
-                        <ToolIcon name={tool.icon} className="size-4 shrink-0" />
+                        <ToolIcon
+                          name={tool.icon}
+                          className="size-4 shrink-0"
+                        />
                         <span className="truncate">{tool.name}</span>
                         {tool.comingSoon && (
                           <Badge
@@ -189,13 +186,32 @@ export default function Dashboard() {
                 </div>
               );
             })}
+
+            {/* Admin link */}
+            <div>
+              <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                Management
+              </p>
+              <button
+                onClick={() => {
+                  setActiveTool(null);
+                  setActiveCategory("all");
+                  setSearchQuery("");
+                  navigate("/admin");
+                }}
+                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer"
+              >
+                <Shield className="size-4 shrink-0" />
+                <span className="truncate">Admin</span>
+              </button>
+            </div>
           </div>
         </ScrollArea>
 
         {/* User */}
         <div className="border-t border-border/60 p-3">
           <div className="flex items-center gap-2.5 rounded-lg px-3 py-2">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
               {user?.name?.charAt(0)?.toUpperCase() || "U"}
             </div>
             <div className="min-w-0 flex-1">
@@ -311,6 +327,19 @@ export default function Dashboard() {
                 transition={{ duration: 0.15 }}
                 className="p-6 lg:p-8"
               >
+                {/* Welcome */}
+                {!searchQuery && (
+                  <div className="mb-8">
+                    <h1 className="text-xl font-bold tracking-tight">
+                      Welcome
+                      {user?.name ? `, ${user.name}` : ""}
+                    </h1>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Select a tool from the sidebar or the grid below.
+                    </p>
+                  </div>
+                )}
+
                 {searchQuery && allFilteredTools ? (
                   <>
                     <h2 className="mb-1 text-lg font-semibold tracking-tight">
@@ -320,10 +349,7 @@ export default function Dashboard() {
                       {allFilteredTools.length} tool
                       {allFilteredTools.length !== 1 ? "s" : ""} found
                     </p>
-                    <ToolGrid
-                      tools={allFilteredTools}
-                      onOpenTool={openTool}
-                    />
+                    <ToolGrid tools={allFilteredTools} onOpenTool={openTool} />
                   </>
                 ) : (
                   categories.map((cat) => {
@@ -347,10 +373,7 @@ export default function Dashboard() {
                             </Badge>
                           )}
                         </div>
-                        <ToolGrid
-                          tools={catTools}
-                          onOpenTool={openTool}
-                        />
+                        <ToolGrid tools={catTools} onOpenTool={openTool} />
                       </div>
                     );
                   })
@@ -385,8 +408,8 @@ function ToolGrid({
             onClick={() => onOpenTool(tool)}
             className={`group border-border/60 shadow-none transition-all duration-150 ${
               tool.comingSoon
-                ? "cursor-default opacity-60"
-                : "cursor-pointer hover:border-primary/30 hover:shadow-md"
+                ? "cursor-default opacity-50"
+                : "cursor-pointer hover:border-primary/30 hover:shadow-md hover:shadow-primary/5"
             }`}
           >
             <CardContent className="flex items-start gap-3 p-4">
@@ -394,7 +417,7 @@ function ToolGrid({
                 className={`flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors duration-150 ${
                   tool.comingSoon
                     ? "bg-muted text-muted-foreground"
-                    : "bg-primary/8 text-primary group-hover:bg-primary/15"
+                    : "bg-primary/10 text-primary group-hover:bg-primary/20"
                 }`}
               >
                 <ToolIcon name={tool.icon} className="size-5" />
@@ -403,10 +426,7 @@ function ToolGrid({
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-semibold">{tool.name}</h3>
                   {tool.comingSoon && (
-                    <Badge
-                      variant="secondary"
-                      className="text-[10px]"
-                    >
+                    <Badge variant="secondary" className="text-[10px]">
                       Soon
                     </Badge>
                   )}

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
 import {
-  Sparkles,
+  Wrench,
   FileText,
   Combine,
   Scissors,
@@ -9,8 +9,9 @@ import {
   Image,
   ArrowRight,
   Zap,
-  Shield,
-  Gauge,
+  Lock,
+  Layers,
+  Terminal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -24,21 +25,21 @@ const pdfTools = [
 const features = [
   {
     icon: Zap,
-    title: "Lightning Fast",
+    title: "Zero Latency",
     description:
-      "All PDF processing happens right in your browser. No uploads to servers, no waiting.",
+      "Every operation runs directly in the browser. No round trips to a server, no queues, no waiting.",
   },
   {
-    icon: Shield,
-    title: "Private & Secure",
+    icon: Lock,
+    title: "Nothing Leaves Your Machine",
     description:
-      "Your files never leave your device. 100% client-side processing with zero data collection.",
+      "Files are processed locally and never uploaded anywhere. What happens in Tool Hub stays in Tool Hub.",
   },
   {
-    icon: Gauge,
-    title: "Built for Teams",
+    icon: Layers,
+    title: "One Interface, Every Tool",
     description:
-      "A unified toolkit your team can access from anywhere. No installs, no accounts for tools.",
+      "PDF workflows, media downloads, and future utilities — unified under a single, consistent experience.",
   },
 ];
 
@@ -51,15 +52,17 @@ export default function Landing() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Nav */}
       <nav className="fixed inset-x-0 top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
-              <Sparkles className="size-4 text-primary-foreground" />
+            <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Wrench className="size-4" />
             </div>
-            <span className="text-base font-bold tracking-tight">ToolHub</span>
+            <span className="text-base font-bold tracking-tight">
+              Tool Hub
+            </span>
           </div>
           <Button
             onClick={() => navigate("/dashboard")}
@@ -74,16 +77,16 @@ export default function Landing() {
 
       {/* Hero */}
       <section className="relative overflow-hidden pt-32 pb-20">
-        {/* Subtle gradient backdrop */}
+        {/* Gradient glow */}
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute left-1/2 top-0 h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-primary/[0.04] blur-3xl" />
+          <div className="absolute left-1/2 top-0 h-[500px] w-[700px] -translate-x-1/2 -translate-y-1/4 rounded-full bg-primary/8 blur-[120px]" />
         </div>
 
         <div className="relative mx-auto max-w-4xl px-6 text-center">
           <motion.div {...fadeUp} transition={{ duration: 0.5 }}>
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border/60 bg-card px-4 py-1.5 text-xs font-medium text-muted-foreground">
-              <span className="size-1.5 rounded-full bg-emerald-500" />
-              Built for your team
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary">
+              <Terminal className="size-3" />
+              Internal tooling — your team only
             </div>
           </motion.div>
 
@@ -92,9 +95,9 @@ export default function Landing() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl"
           >
-            One hub. Every tool
+            Every tool. One place.
             <br />
-            your team needs.
+            <span className="text-primary">No server required.</span>
           </motion.h1>
 
           <motion.p
@@ -102,8 +105,9 @@ export default function Landing() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-muted-foreground"
           >
-            PDF merging, media downloading, and more — all processed
-            client-side. Fast, private, and zero setup required.
+            A unified, client-side toolkit for the team. PDF merging today,
+            media downloads and more tomorrow — all processed locally in
+            your browser.
           </motion.p>
 
           <motion.div
@@ -114,9 +118,9 @@ export default function Landing() {
             <Button
               onClick={() => navigate("/dashboard")}
               size="lg"
-              className="cursor-pointer gap-2 px-7 text-sm font-medium shadow-lg"
+              className="cursor-pointer gap-2 px-7 text-sm font-medium shadow-lg shadow-primary/20"
             >
-              Start using ToolHub
+              Launch Tool Hub
               <ArrowRight className="size-4" />
             </Button>
           </motion.div>
@@ -124,17 +128,17 @@ export default function Landing() {
       </section>
 
       {/* Tool preview strip */}
-      <section className="border-y border-border/60 bg-card/50 py-10">
+      <section className="border-y border-border/60 bg-card/30 py-10">
         <div className="mx-auto max-w-5xl px-6">
-          <p className="mb-6 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
-            V1 — PDF Tools Available Now
+          <p className="mb-6 text-center text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+            Available now
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             {pdfTools.map((tool) => (
               <motion.div
                 key={tool.label}
                 whileHover={{ y: -2 }}
-                className="flex items-center gap-2 rounded-xl border border-border/60 bg-card px-4 py-2.5 text-sm font-medium shadow-sm transition-colors hover:border-primary/30"
+                className="flex items-center gap-2 rounded-xl border border-border/60 bg-card px-4 py-2.5 text-sm font-medium shadow-sm transition-colors hover:border-primary/40 hover:text-primary"
               >
                 <tool.icon className="size-4 text-primary" />
                 {tool.label}
@@ -155,10 +159,10 @@ export default function Landing() {
             className="mb-12 text-center"
           >
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              Why ToolHub?
+              Why Tool Hub?
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Designed from the ground up for how teams actually work.
+              Purpose-built for how our team actually works.
             </p>
           </motion.div>
 
@@ -171,8 +175,8 @@ export default function Landing() {
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ duration: 0.4, delay: i * 0.1 }}
               >
-                <div className="h-full rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-                  <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-primary/8 text-primary">
+                <div className="h-full rounded-2xl border border-border/60 bg-card p-6">
+                  <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <feature.icon className="size-5" />
                   </div>
                   <h3 className="mb-1.5 text-sm font-semibold">
@@ -198,18 +202,19 @@ export default function Landing() {
             transition={{ duration: 0.4 }}
           >
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              Ready to get started?
+              Ready to go?
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Open the dashboard and start using tools right away.
+              Sign in and start using tools immediately. No onboarding
+              required.
             </p>
             <Button
               onClick={() => navigate("/dashboard")}
               size="lg"
-              className="mt-6 cursor-pointer gap-2 px-7 text-sm font-medium shadow-lg"
+              className="mt-6 cursor-pointer gap-2 px-7 text-sm font-medium shadow-lg shadow-primary/20"
             >
               <FileText className="size-4" />
-              Open ToolHub
+              Open Tool Hub
             </Button>
           </motion.div>
         </div>
@@ -218,7 +223,7 @@ export default function Landing() {
       {/* Footer */}
       <footer className="border-t border-border/60 py-6">
         <div className="mx-auto max-w-6xl px-6 text-center text-xs text-muted-foreground">
-          ToolHub — All-in-one tool hub for your team.
+          Tool Hub — Internal toolkit for the team.
         </div>
       </footer>
     </div>
