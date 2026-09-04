@@ -35,6 +35,9 @@ import {
 import { Input } from "@/components/ui/input";
 
 const MergePdf = lazy(() => import("@/components/tools/MergePdf"));
+const SplitPdf = lazy(() => import("@/components/tools/SplitPdf"));
+const CompressPdf = lazy(() => import("@/components/tools/CompressPdf"));
+const MediaDownloader = lazy(() => import("@/components/tools/MediaDownloader"));
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   FileText,
@@ -315,6 +318,15 @@ export default function Dashboard() {
                 >
                   {activeTool.id === "merge-pdf" && (
                     <MergePdf onBack={goBack} />
+                  )}
+                  {activeTool.id === "split-pdf" && (
+                    <SplitPdf onBack={goBack} />
+                  )}
+                  {activeTool.id === "compress-pdf" && (
+                    <CompressPdf onBack={goBack} />
+                  )}
+                  {activeTool.id === "video-downloader" && (
+                    <MediaDownloader onBack={goBack} />
                   )}
                 </Suspense>
               </motion.div>

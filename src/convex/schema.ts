@@ -32,12 +32,28 @@ const schema = defineSchema(
       role: v.optional(roleValidator), // role of the user. do not remove
     }).index("email", ["email"]), // index for the email. do not remove or modify
 
-    // add other tables here
+    // ── Tool Hub tables ────────────────────────────────────────
 
-    // tableName: defineTable({
-    //   ...
-    //   // table fields
-    // }).index("by_field", ["field"])
+    /** Every tool invocation is logged here for admin analytics. */
+    toolUsage: defineTable({
+      userId: v.id("users"),
+      toolId: v.string(),
+      toolName: v.string(),
+      inputSize: v.optional(v.number()), // bytes ingested
+      outputSize: v.optional(v.number()), // bytes produced
+      metadata: v.optional(v.string()), // JSON string for extra info
+      createdAt: v.number(),
+    })
+      .index("by_user", ["userId"])
+      .index("by_tool", ["toolId"])
+      .index("by_createdAt", ["createdAt"]),
+
+    /** Per-IP rate-limit counters, auto-cleaned. */
+    rateLimitLog: defineTable({
+      ip: v.string(),
+      windowStart: v.number(),
+      count: v.number(),
+    }).index("by_ip_window", ["ip", "windowStart"]),
   },
   {
     schemaValidation: false,

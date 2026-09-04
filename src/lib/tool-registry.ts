@@ -42,7 +42,7 @@ export const tools: ToolDef[] = [
     description: "Extract pages from a PDF into separate files.",
     icon: "Scissors",
     category: "pdf",
-    comingSoon: true,
+    routeKey: "split-pdf",
   },
   {
     id: "compress-pdf",
@@ -50,7 +50,7 @@ export const tools: ToolDef[] = [
     description: "Reduce PDF file size while maintaining quality.",
     icon: "Minimize2",
     category: "pdf",
-    comingSoon: true,
+    routeKey: "compress-pdf",
   },
   {
     id: "pdf-to-image",
@@ -77,7 +77,7 @@ export const tools: ToolDef[] = [
       "Download videos from YouTube, Instagram, TikTok and more.",
     icon: "Globe",
     category: "media",
-    comingSoon: true,
+    routeKey: "media-downloader",
   },
 
   // ── Future ─────────────────────────────────────────────────
