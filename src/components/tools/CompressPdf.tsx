@@ -1,7 +1,5 @@
 import { useCallback, useRef, useState } from "react";
 import { PDFDocument } from "pdf-lib";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -27,19 +25,17 @@ function formatFileSize(bytes: number): string {
 }
 
 export default function CompressPdf({ onBack }: CompressPdfProps) {
-  const logUsage = useMutation(api.usage.logUsage);
   const [file, setFile] = useState<{
     file: File;
     name: string;
     pageCount: number;
     size: string;
-    data: string;
   } | null>(null);
   const [quality, setQuality] = useState<"low" | "medium" | "high">("medium");
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{
-    data: string;
+    data: Uint8Array;
     inputSize: number;
     outputSize: number;
     ratio: string;
@@ -66,15 +62,11 @@ export default function CompressPdf({ onBack }: CompressPdfProps) {
       const arrayBuffer = await firstFile.arrayBuffer();
       const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
       const pageCount = pdfDoc.getPageCount();
-      const base64 = btoa(
-        new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), ""),
-      );
       setFile({
         file: firstFile,
         name: firstFile.name,
         pageCount,
         size: formatFileSize(firstFile.size),
-        data: base64,
       });
     } catch {
       setError(`"${firstFile.name}" could not be read.`);
@@ -96,11 +88,8 @@ export default function CompressPdf({ onBack }: CompressPdfProps) {
         sourcePdf,
         sourcePdf.getPageIndices(),
       );
-      for (const page of copiedPages) {
-        compressedPdf.addPage(page);
-      }
+      for (const page of copiedPages) compressedPdf.addPage(page);
 
-      // Strip metadata
       compressedPdf.setTitle("");
       compressedPdf.setAuthor("");
       compressedPdf.setSubject("");
@@ -116,36 +105,11 @@ export default function CompressPdf({ onBack }: CompressPdfProps) {
 
       const inputSize = arrayBuffer.byteLength;
       const outputSize = compressedBytes.length;
-      const ratio =
-        inputSize > 0 ? ((1 - outputSize / inputSize) * 100).toFixed(1) : "0";
+      const ratio = inputSize > 0 ? ((1 - outputSize / inputSize) * 100).toFixed(1) : "0";
 
-      const b64 = btoa(
-        new Uint8Array(compressedBytes).reduce(
-          (d, b) => d + String.fromCharCode(b),
-          "",
-        ),
-      );
-
-      setResult({
-        data: b64,
-        inputSize,
-        outputSize,
-        ratio: `${ratio}%`,
-      });
-
-      await logUsage({
-        toolId: "compress-pdf",
-        toolName: "Compress PDF",
-        inputSize,
-        outputSize,
-        metadata: JSON.stringify({ quality }),
-      });
+      setResult({ data: compressedBytes, inputSize, outputSize, ratio: `${ratio}%` });
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? `Compression failed: ${err.message}`
-          : "An unexpected error occurred.",
-      );
+      setError(err instanceof Error ? `Compression failed: ${err.message}` : "An unexpected error occurred.");
     } finally {
       setIsProcessing(false);
     }
@@ -153,10 +117,7 @@ export default function CompressPdf({ onBack }: CompressPdfProps) {
 
   const downloadResult = () => {
     if (!result || !file) return;
-    const binary = atob(result.data);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    const blob = new Blob([bytes], { type: "application/pdf" });
+    const blob = new Blob([result.data.buffer as ArrayBuffer], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -275,12 +236,8 @@ export default function CompressPdf({ onBack }: CompressPdfProps) {
 
               {/* Compress button */}
               <div className="flex justify-center">
-                <Button
-                  onClick={handleCompress}
-                  disabled={isProcessing}
-                  size="lg"
-                  className="cursor-pointer gap-2 px-8 text-sm font-medium shadow-md"
-                >
+                <Button onClick={handleCompress} disabled={isProcessing} size="lg"
+                  className="cursor-pointer gap-2 px-8 text-sm font-medium shadow-md">
                   {isProcessing ? (
                     <>
                       <Loader2 className="size-4 animate-spin" />

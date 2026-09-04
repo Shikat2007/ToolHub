@@ -1,18 +1,38 @@
-import { api } from "@/convex/_generated/api";
-import { useAuthActions } from "@convex-dev/auth/react";
-import { useConvexAuth, useQuery } from "convex/react";
+/**
+ * Simple local auth hook — no backend, no database.
+ * Provides a mock user for the UI. In a real deployment, replace with
+ * your actual auth provider (JWT, session, etc.).
+ */
+
+import { useState, useCallback } from "react";
+
+interface User {
+  name: string;
+  email: string;
+  role: "admin" | "member";
+}
+
+const DEMO_USER: User = {
+  name: "Team Member",
+  email: "member@toolhub.local",
+  role: "admin",
+};
 
 export function useAuth() {
-  const { isLoading: isAuthLoading, isAuthenticated } = useConvexAuth();
-  const user = useQuery(api.users.currentUser);
-  const { signIn, signOut } = useAuthActions();
+  const [user, setUser] = useState<User | null>(DEMO_USER);
+  const [isLoading] = useState(false);
 
-  // Derive isLoading directly from the dependencies instead of managing separate state
-  const isLoading = isAuthLoading || user === undefined;
+  const signOut = useCallback(() => {
+    setUser(null);
+  }, []);
+
+  const signIn = useCallback(() => {
+    setUser(DEMO_USER);
+  }, []);
 
   return {
     isLoading,
-    isAuthenticated,
+    isAuthenticated: !!user,
     user,
     signIn,
     signOut,

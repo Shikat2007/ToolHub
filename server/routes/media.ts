@@ -1,20 +1,32 @@
 /**
- * Media Downloader actions — server-side URL analysis and metadata extraction.
+ * Media Routes — URL analysis and metadata extraction.
  *
  * Security:
- *   - Strict URL validation (HTTPS only, no private IPs)
- *   - SSRF protection via DNS resolution checks
- *   - Rate limiting per IP
+ *   - Strict URL validation (HTTPS only)
+ *   - SSRF protection (DNS resolution + private IP blocking)
+ *   - Shell metacharacter rejection
  *   - No shell execution — pure HTTP fetch + HTML parsing
+ *   - No persistence — all data discarded after response
  */
 
-"use node";
+import { Router, Request, Response } from "express";
+import rateLimit from "express-rate-limit";
+import { assertSafeUrl, isValidHttpUrl } from "../middleware/security";
 
-import { v } from "convex/values";
-import { action } from "./_generated/server";
-import { assertSafeUrl, isValidHttpUrl } from "./lib/security";
+export const mediaRoutes = Router();
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+// Per-route rate limiter: 10 requests per minute (stricter for external fetches)
+const mediaLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Media rate limit exceeded. Try again in a minute." },
+});
+
+mediaRoutes.use(mediaLimiter);
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function extractVideoId(
   url: string,
@@ -119,90 +131,84 @@ async function fetchPageMetadata(
   }
 }
 
-// ── Actions ─────────────────────────────────────────────────────────────────
+// ── POST /api/media/analyze ─────────────────────────────────────────────────
 
-interface DownloadOption {
-  quality: string;
-  format: string;
-  label: string;
-  url: string | null;
-}
+mediaRoutes.post("/analyze", async (req: Request, res: Response) => {
+  try {
+    const { url } = req.body as { url: string };
 
-export const analyzeMediaUrl = action({
-  args: {
-    url: v.string(),
-  },
-  handler: async (_ctx, args) => {
-    if (!isValidHttpUrl(args.url)) {
-      throw new Error(
-        "Invalid URL. Please enter a valid HTTP or HTTPS URL.",
-      );
+    if (!url || typeof url !== "string") {
+      res.status(400).json({ error: "URL is required." });
+      return;
     }
 
-    await assertSafeUrl(args.url);
+    if (!isValidHttpUrl(url)) {
+      res
+        .status(400)
+        .json({ error: "Invalid URL. Enter a valid HTTP or HTTPS URL." });
+      return;
+    }
 
-    const { platform, videoId } = extractVideoId(args.url);
-    const metadata = await fetchPageMetadata(args.url);
+    // SSRF check
+    await assertSafeUrl(url);
+
+    const { platform, videoId } = extractVideoId(url);
+    const metadata = await fetchPageMetadata(url);
+
+    interface DownloadOption {
+      quality: string;
+      format: string;
+      label: string;
+      requiresBackend: boolean;
+    }
 
     let downloadOptions: DownloadOption[] = [];
 
     if (platform === "youtube" && videoId) {
       downloadOptions = [
-        { quality: "1080p", format: "mp4", label: "Full HD (1080p)", url: null },
-        { quality: "720p", format: "mp4", label: "HD (720p)", url: null },
-        { quality: "480p", format: "mp4", label: "SD (480p)", url: null },
-        { quality: "audio", format: "mp3", label: "Audio only (MP3)", url: null },
+        { quality: "1080p", format: "mp4", label: "Full HD (1080p)", requiresBackend: true },
+        { quality: "720p", format: "mp4", label: "HD (720p)", requiresBackend: true },
+        { quality: "480p", format: "mp4", label: "SD (480p)", requiresBackend: true },
+        { quality: "audio", format: "mp3", label: "Audio only (MP3)", requiresBackend: true },
       ];
     } else if (platform === "facebook" && videoId) {
       downloadOptions = [
-        { quality: "hd", format: "mp4", label: "HD Quality", url: null },
-        { quality: "sd", format: "mp4", label: "SD Quality", url: null },
+        { quality: "hd", format: "mp4", label: "HD Quality", requiresBackend: true },
+        { quality: "sd", format: "mp4", label: "SD Quality", requiresBackend: true },
       ];
     } else if (platform === "instagram") {
       downloadOptions = [
-        { quality: "original", format: "mp4", label: "Original Quality", url: null },
+        { quality: "original", format: "mp4", label: "Original Quality", requiresBackend: true },
       ];
     } else if (platform === "tiktok") {
       downloadOptions = [
-        { quality: "hd", format: "mp4", label: "HD (No Watermark)", url: null },
-        { quality: "sd", format: "mp4", label: "SD (No Watermark)", url: null },
-        { quality: "audio", format: "mp3", label: "Audio only (MP3)", url: null },
+        { quality: "hd", format: "mp4", label: "HD (No Watermark)", requiresBackend: true },
+        { quality: "sd", format: "mp4", label: "SD (No Watermark)", requiresBackend: true },
+        { quality: "audio", format: "mp3", label: "Audio only (MP3)", requiresBackend: true },
       ];
     } else if (platform === "twitter") {
       downloadOptions = [
-        { quality: "original", format: "mp4", label: "Original Quality", url: null },
-        { quality: "medium", format: "mp4", label: "Compressed", url: null },
+        { quality: "original", format: "mp4", label: "Original Quality", requiresBackend: true },
+        { quality: "medium", format: "mp4", label: "Compressed", requiresBackend: true },
       ];
     } else {
       downloadOptions = [
-        { quality: "original", format: "mp4", label: "Original Quality", url: null },
+        { quality: "original", format: "mp4", label: "Original Quality", requiresBackend: true },
       ];
     }
 
-    return {
+    res.json({
       platform,
       videoId,
       title: metadata.title,
       description: metadata.description,
       thumbnail: metadata.thumbnail,
       downloadOptions,
-      originalUrl: args.url,
-    };
-  },
-});
-
-export const fetchUrlMetadata = action({
-  args: {
-    url: v.string(),
-  },
-  handler: async (_ctx, args) => {
-    if (!isValidHttpUrl(args.url)) {
-      throw new Error("Invalid URL.");
-    }
-
-    await assertSafeUrl(args.url);
-
-    const metadata = await fetchPageMetadata(args.url);
-    return metadata;
-  },
+      originalUrl: url,
+    });
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Internal server error";
+    res.status(500).json({ error: message });
+  }
 });

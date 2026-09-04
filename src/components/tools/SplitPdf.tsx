@@ -1,7 +1,5 @@
 import { useCallback, useRef, useState } from "react";
 import { PDFDocument } from "pdf-lib";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -30,13 +28,11 @@ function formatFileSize(bytes: number): string {
 }
 
 export default function SplitPdf({ onBack }: SplitPdfProps) {
-  const splitPdfAction = useMutation(api.usage.logUsage);
   const [file, setFile] = useState<{
     file: File;
     name: string;
     pageCount: number;
     size: string;
-    data: string;
   } | null>(null);
   const [pageRange, setPageRange] = useState("");
   const [splitMode, setSplitMode] = useState<"range" | "individual" | "every-n">("range");
@@ -44,10 +40,9 @@ export default function SplitPdf({ onBack }: SplitPdfProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [resultFiles, setResultFiles] = useState<Array<{ name: string; data: string; pageCount: number }>>([]);
+  const [resultFiles, setResultFiles] = useState<Array<{ name: string; pageCount: number }>>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const dropRef = useRef<HTMLDivElement>(null);
 
   const processFile = useCallback(async (fileList: FileList | File[]) => {
     setError(null);
@@ -69,30 +64,17 @@ export default function SplitPdf({ onBack }: SplitPdfProps) {
       const arrayBuffer = await firstFile.arrayBuffer();
       const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
       const pageCount = pdfDoc.getPageCount();
-      const base64 = btoa(
-        new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), ""),
-      );
       setFile({
         file: firstFile,
         name: firstFile.name,
         pageCount,
         size: formatFileSize(firstFile.size),
-        data: base64,
       });
       setPageRange(`1-${pageCount}`);
     } catch {
       setError(`"${firstFile.name}" could not be read.`);
     }
   }, []);
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDragging(false);
-      if (e.dataTransfer.files.length > 0) processFile(e.dataTransfer.files);
-    },
-    [processFile],
-  );
 
   const handleSplit = async () => {
     if (!file || !pageRange.trim()) return;
@@ -101,12 +83,10 @@ export default function SplitPdf({ onBack }: SplitPdfProps) {
     setSuccess(false);
 
     try {
-      // Client-side split using pdf-lib
       const arrayBuffer = await file.file.arrayBuffer();
       const sourcePdf = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
       const totalPages = sourcePdf.getPageCount();
 
-      // Parse page range
       const pages = new Set<number>();
       const parts = pageRange.split(",").map((s) => s.trim());
       for (const part of parts) {
@@ -129,17 +109,14 @@ export default function SplitPdf({ onBack }: SplitPdfProps) {
 
       const requestedPages = Array.from(pages).sort((a, b) => a - b);
       const baseName = file.name.replace(/\.pdf$/i, "");
-      const newFiles: Array<{ name: string; data: string; pageCount: number }> = [];
+      const newFiles: Array<{ name: string; pageCount: number }> = [];
 
       if (splitMode === "range") {
         const newPdf = await PDFDocument.create();
         const copiedPages = await newPdf.copyPages(sourcePdf, requestedPages.map((p) => p - 1));
         for (const page of copiedPages) newPdf.addPage(page);
-        const newBytes = await newPdf.save();
-        const b64 = btoa(new Uint8Array(newBytes).reduce((d, b) => d + String.fromCharCode(b), ""));
         newFiles.push({
           name: `${baseName}_pages_${requestedPages[0]}-${requestedPages[requestedPages.length - 1]}.pdf`,
-          data: b64,
           pageCount: newPdf.getPageCount(),
         });
       } else if (splitMode === "individual") {
@@ -147,9 +124,7 @@ export default function SplitPdf({ onBack }: SplitPdfProps) {
           const newPdf = await PDFDocument.create();
           const copiedPages = await newPdf.copyPages(sourcePdf, [pageNum - 1]);
           newPdf.addPage(copiedPages[0]);
-          const newBytes = await newPdf.save();
-          const b64 = btoa(new Uint8Array(newBytes).reduce((d, b) => d + String.fromCharCode(b), ""));
-          newFiles.push({ name: `${baseName}_page_${pageNum}.pdf`, data: b64, pageCount: 1 });
+          newFiles.push({ name: `${baseName}_page_${pageNum}.pdf`, pageCount: 1 });
         }
       } else {
         const cs = Number(chunkSize) || 2;
@@ -158,11 +133,8 @@ export default function SplitPdf({ onBack }: SplitPdfProps) {
           const newPdf = await PDFDocument.create();
           const copiedPages = await newPdf.copyPages(sourcePdf, chunk.map((p) => p - 1));
           for (const page of copiedPages) newPdf.addPage(page);
-          const newBytes = await newPdf.save();
-          const b64 = btoa(new Uint8Array(newBytes).reduce((d, b) => d + String.fromCharCode(b), ""));
           newFiles.push({
             name: `${baseName}_part_${Math.floor(i / cs) + 1}.pdf`,
-            data: b64,
             pageCount: newPdf.getPageCount(),
           });
         }
@@ -170,34 +142,11 @@ export default function SplitPdf({ onBack }: SplitPdfProps) {
 
       setResultFiles(newFiles);
       setSuccess(true);
-
-      // Log usage
-      await splitPdfAction({
-        toolId: "split-pdf",
-        toolName: "Split PDF",
-        inputSize: file.file.size,
-        metadata: JSON.stringify({ splitMode, pageCount: requestedPages.length }),
-      });
     } catch (err) {
       setError(err instanceof Error ? `Split failed: ${err.message}` : "An unexpected error occurred.");
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  const downloadFile = (b64: string, name: string) => {
-    const binary = atob(b64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    const blob = new Blob([bytes], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   };
 
   return (
@@ -223,10 +172,9 @@ export default function SplitPdf({ onBack }: SplitPdfProps) {
         <div className="mx-auto max-w-3xl px-6 py-8">
           {/* Drop zone */}
           <div
-            ref={dropRef}
-            onDrop={handleDrop}
+            onDrop={(e) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files.length) processFile(e.dataTransfer.files); }}
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-            onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+            onDragLeave={() => setIsDragging(false)}
             onClick={() => fileInputRef.current?.click()}
             className={`group relative flex cursor-pointer flex-col items-center rounded-2xl border-2 border-dashed px-6 py-12 text-center transition-all duration-200 ${
               isDragging
@@ -318,9 +266,7 @@ export default function SplitPdf({ onBack }: SplitPdfProps) {
 
                 {splitMode === "range" || splitMode === "individual" ? (
                   <div>
-                    <Label htmlFor="pageRange" className="text-sm font-medium">
-                      Page Range
-                    </Label>
+                    <Label htmlFor="pageRange" className="text-sm font-medium">Page Range</Label>
                     <Input
                       id="pageRange"
                       value={pageRange}
@@ -335,9 +281,7 @@ export default function SplitPdf({ onBack }: SplitPdfProps) {
                   </div>
                 ) : (
                   <div>
-                    <Label htmlFor="chunkSize" className="text-sm font-medium">
-                      Pages per Chunk
-                    </Label>
+                    <Label htmlFor="chunkSize" className="text-sm font-medium">Pages per Chunk</Label>
                     <Input
                       id="chunkSize"
                       type="number"
@@ -385,14 +329,9 @@ export default function SplitPdf({ onBack }: SplitPdfProps) {
                           <p className="truncate text-sm font-medium">{rf.name}</p>
                           <p className="text-xs text-muted-foreground">{rf.pageCount} page{rf.pageCount !== 1 ? "s" : ""}</p>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => downloadFile(rf.data, rf.name)}
-                          className="cursor-pointer gap-1.5 text-xs"
-                        >
+                        <Button variant="ghost" size="sm" disabled className="gap-1.5 text-xs">
                           <Download className="size-3.5" />
-                          Download
+                          Saved
                         </Button>
                       </CardContent>
                     </Card>

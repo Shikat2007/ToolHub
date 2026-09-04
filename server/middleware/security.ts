@@ -1,13 +1,14 @@
 /**
- * Security utilities for Tool Hub backend.
+ * Security Middleware — SSRF protection, input validation, command injection prevention.
  *
- * All helpers are pure — no side-effects, no globals — so they can be used
- * safely inside Convex actions ("use node") and HTTP handlers.
+ * All checks are pure runtime (in-memory). No database, no logging to disk.
  */
+
+import { Request, Response, NextFunction } from "express";
+import dns from "dns";
 
 // ── SSRF Protection ─────────────────────────────────────────────────────────
 
-/** Ranges that must never be targeted by server-side fetches. */
 const PRIVATE_RANGES: Array<{ start: number[]; end: number[] }> = [
   { start: [127, 0, 0, 0], end: [127, 255, 255, 255] },
   { start: [10, 0, 0, 0], end: [10, 255, 255, 255] },
@@ -40,7 +41,6 @@ function isPrivateIP(ip: string): boolean {
 
 /**
  * Resolve a hostname and verify none of the resolved IPs are private/internal.
- * Throws if SSRF is detected.
  */
 export async function assertSafeUrl(url: string): Promise<void> {
   let parsed: URL;
@@ -62,35 +62,31 @@ export async function assertSafeUrl(url: string): Promise<void> {
     hostname === "[::1]" ||
     hostname === "0.0.0.0"
   ) {
-    throw new Error("Requests to localhost / internal addresses are blocked.");
+    throw new Error("Requests to localhost are blocked.");
   }
 
+  // If hostname is an IP literal
   const ipParts = ipToNumber(hostname);
   if (ipParts.length === 4 && ipParts.every((p) => !isNaN(p))) {
     if (isPrivateIP(hostname)) {
-      throw new Error(
-        "Requests to private / internal IP ranges are blocked.",
-      );
+      throw new Error("Requests to private IP ranges are blocked.");
     }
     return;
   }
 
+  // DNS resolution check
   try {
-    const dns = await import("dns");
-    const lookupAsync = (h: string): Promise<string[]> =>
-      new Promise((resolve, reject) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (dns as any).resolve4(h, (err: Error | null, addresses: string[]) => {
-          if (err) reject(err);
-          else resolve(addresses);
-        });
+    const addresses = await new Promise<string[]>((resolve, reject) => {
+      dns.resolve4(hostname, (err, addrs) => {
+        if (err) reject(err);
+        else resolve(addrs);
       });
+    });
 
-    const addresses = await lookupAsync(hostname);
     for (const addr of addresses) {
       if (isPrivateIP(addr)) {
         throw new Error(
-          `SSRF blocked: hostname "${hostname}" resolves to private IP ${addr}.`,
+          `SSRF blocked: "${hostname}" resolves to private IP ${addr}.`,
         );
       }
     }
@@ -100,7 +96,15 @@ export async function assertSafeUrl(url: string): Promise<void> {
   }
 }
 
-// ── URL / Input Validation ──────────────────────────────────────────────────
+// ── Command Injection Prevention ─────────────────────────────────────────────
+
+const SHELL_METACHARACTERS = /[;&|`$(){}[\]<>!\\]/;
+
+function containsShellMetachars(input: string): boolean {
+  return SHELL_METACHARACTERS.test(input);
+}
+
+// ── URL Validation ───────────────────────────────────────────────────────────
 
 const SAFE_URL_RE = /^https?:\/\/[^\s/$.?#].[^\s]*$/i;
 
@@ -114,13 +118,36 @@ export function isValidHttpUrl(url: string): boolean {
   }
 }
 
-export function sanitizeFilename(name: string, maxLen = 200): string {
-  return name
-    .replace(/[\x00-\x1f\x7f/\\]/g, "")
-    .replace(/\.\./g, "")
-    .slice(0, maxLen)
-    .trim();
+// ── Middleware ────────────────────────────────────────────────────────────────
+
+export function securityMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  // Block shell metacharacters in any query param or body string
+  const checkString = (val: unknown): boolean => {
+    if (typeof val === "string") return containsShellMetachars(val);
+    if (Array.isArray(val)) return val.some(checkString);
+    if (val && typeof val === "object") {
+      return Object.values(val).some(checkString);
+    }
+    return false;
+  };
+
+  if (checkString(req.query) || checkString(req.body)) {
+    res.status(400).json({ error: "Invalid input: prohibited characters detected." });
+    return;
+  }
+
+  next();
 }
+
+// ── Resource Limits ──────────────────────────────────────────────────────────
+
+export const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+export const MAX_MERGE_FILES = 20;
+export const MAX_OUTPUT_SIZE = 200 * 1024 * 1024; // 200 MB
 
 /** Validate PDF page range string like "1-3,5,8-10". Returns 1-indexed pages. */
 export function parsePageRange(input: string, maxPage: number): number[] {
@@ -150,20 +177,3 @@ export function parsePageRange(input: string, maxPage: number): number[] {
   if (pages.size === 0) throw new Error("No valid pages specified.");
   return Array.from(pages).sort((a, b) => a - b);
 }
-
-// ── Rate Limiting Config ────────────────────────────────────────────────────
-
-export const RATE_LIMITS: Record<
-  string,
-  { maxRequests: number; windowMs: number }
-> = {
-  "merge-pdf": { maxRequests: 30, windowMs: 60_000 },
-  "split-pdf": { maxRequests: 30, windowMs: 60_000 },
-  "compress-pdf": { maxRequests: 30, windowMs: 60_000 },
-  "media-download": { maxRequests: 10, windowMs: 60_000 },
-  default: { maxRequests: 20, windowMs: 60_000 },
-};
-
-export const MAX_FILE_SIZE = 100 * 1024 * 1024;
-export const MAX_MERGE_FILES = 20;
-export const MAX_OUTPUT_SIZE = 200 * 1024 * 1024;

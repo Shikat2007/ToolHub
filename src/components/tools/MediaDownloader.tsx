@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { useAction, useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -33,7 +31,7 @@ interface MediaResult {
     quality: string;
     format: string;
     label: string;
-    url: string | null;
+    requiresBackend: boolean;
   }>;
   originalUrl: string;
 }
@@ -57,8 +55,6 @@ const platformColors: Record<string, string> = {
 };
 
 export default function MediaDownloader({ onBack }: MediaDownloaderProps) {
-  const analyzeUrl = useAction(api.media.analyzeMediaUrl);
-  const logUsage = useMutation(api.usage.logUsage);
   const [url, setUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,20 +67,85 @@ export default function MediaDownloader({ onBack }: MediaDownloaderProps) {
     setResult(null);
 
     try {
-      const res = await analyzeUrl({ url: url.trim() });
-      setResult(res);
+      // Client-side URL analysis (no backend required)
+      const parsed = new URL(url.trim());
+      const host = parsed.hostname.replace("www.", "").replace("m.", "");
 
-      await logUsage({
-        toolId: "media-downloader",
-        toolName: "Universal Downloader",
-        metadata: JSON.stringify({ platform: res.platform, url: res.originalUrl }),
+      let platform = "other";
+      let videoId: string | null = null;
+
+      if (host.includes("youtube.com") || host.includes("youtu.be")) {
+        platform = "youtube";
+        if (host.includes("youtu.be")) {
+          videoId = parsed.pathname.slice(1).split("?")[0] || null;
+        } else {
+          videoId = parsed.searchParams.get("v");
+        }
+      } else if (host.includes("facebook.com") || host.includes("fb.com") || host.includes("fb.watch")) {
+        platform = "facebook";
+        const match = parsed.pathname.match(/\/videos?\/(\d+)/);
+        videoId = match?.[1] ?? null;
+      } else if (host.includes("instagram.com")) {
+        platform = "instagram";
+        const match = parsed.pathname.match(/\/reel\/([\w-]+)/) || parsed.pathname.match(/\/p\/([\w-]+)/);
+        videoId = match?.[1] ?? null;
+      } else if (host.includes("tiktok.com")) {
+        platform = "tiktok";
+        const match = parsed.pathname.match(/\/video\/(\d+)/);
+        videoId = match?.[1] ?? null;
+      } else if (host.includes("twitter.com") || host.includes("x.com")) {
+        platform = "twitter";
+        const match = parsed.pathname.match(/\/status\/(\d+)/);
+        videoId = match?.[1] ?? null;
+      }
+
+      // Build download options
+      let downloadOptions: MediaResult["downloadOptions"] = [];
+
+      if (platform === "youtube") {
+        downloadOptions = [
+          { quality: "1080p", format: "mp4", label: "Full HD (1080p)", requiresBackend: true },
+          { quality: "720p", format: "mp4", label: "HD (720p)", requiresBackend: true },
+          { quality: "480p", format: "mp4", label: "SD (480p)", requiresBackend: true },
+          { quality: "audio", format: "mp3", label: "Audio only (MP3)", requiresBackend: true },
+        ];
+      } else if (platform === "facebook") {
+        downloadOptions = [
+          { quality: "hd", format: "mp4", label: "HD Quality", requiresBackend: true },
+          { quality: "sd", format: "mp4", label: "SD Quality", requiresBackend: true },
+        ];
+      } else if (platform === "instagram") {
+        downloadOptions = [
+          { quality: "original", format: "mp4", label: "Original Quality", requiresBackend: true },
+        ];
+      } else if (platform === "tiktok") {
+        downloadOptions = [
+          { quality: "hd", format: "mp4", label: "HD (No Watermark)", requiresBackend: true },
+          { quality: "sd", format: "mp4", label: "SD (No Watermark)", requiresBackend: true },
+          { quality: "audio", format: "mp3", label: "Audio only (MP3)", requiresBackend: true },
+        ];
+      } else if (platform === "twitter") {
+        downloadOptions = [
+          { quality: "original", format: "mp4", label: "Original Quality", requiresBackend: true },
+          { quality: "medium", format: "mp4", label: "Compressed", requiresBackend: true },
+        ];
+      } else {
+        downloadOptions = [
+          { quality: "original", format: "mp4", label: "Original Quality", requiresBackend: true },
+        ];
+      }
+
+      setResult({
+        platform,
+        videoId,
+        title: `Video from ${platform.charAt(0).toUpperCase() + platform.slice(1)}`,
+        description: `Detected ${platform} video. ID: ${videoId ?? "unknown"}`,
+        thumbnail: null,
+        downloadOptions,
+        originalUrl: url.trim(),
       });
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to analyze URL. Please check the link and try again.",
-      );
+    } catch {
+      setError("Invalid URL. Please enter a valid video link.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -164,15 +225,6 @@ export default function MediaDownloader({ onBack }: MediaDownloaderProps) {
 
                 {/* Video info card */}
                 <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
-                  {result.thumbnail && (
-                    <div className="relative aspect-video w-full overflow-hidden bg-muted">
-                      <img
-                        src={result.thumbnail}
-                        alt={result.title}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                  )}
                   <div className="p-4">
                     <div className="flex items-start gap-3">
                       <PlatformIcon className={`mt-0.5 size-5 shrink-0 ${platformColors[result.platform] ?? "text-muted-foreground"}`} />
@@ -218,19 +270,7 @@ export default function MediaDownloader({ onBack }: MediaDownloaderProps) {
                             {opt.format}
                           </p>
                         </div>
-                        {opt.url ? (
-                          <Button
-                            variant="default"
-                            size="sm"
-                            className="cursor-pointer gap-1.5"
-                            asChild
-                          >
-                            <a href={opt.url} target="_blank" rel="noopener noreferrer">
-                              <Download className="size-3.5" />
-                              Download
-                            </a>
-                          </Button>
-                        ) : (
+                        {opt.requiresBackend ? (
                           <Button
                             variant="outline"
                             size="sm"
@@ -240,14 +280,19 @@ export default function MediaDownloader({ onBack }: MediaDownloaderProps) {
                             <ExternalLink className="size-3.5" />
                             Requires API
                           </Button>
+                        ) : (
+                          <Button variant="default" size="sm" className="cursor-pointer gap-1.5">
+                            <Download className="size-3.5" />
+                            Download
+                          </Button>
                         )}
                       </div>
                     ))}
                   </div>
                   <p className="mt-3 rounded-lg bg-muted/50 p-3 text-[11px] leading-relaxed text-muted-foreground">
-                    Note: Direct downloads require a backend service (yt-dlp or equivalent).
+                    Direct video downloading requires a backend service (yt-dlp or equivalent).
                     This interface analyzes the URL, detects the platform, and presents available
-                    formats. For production use, wire up a download proxy endpoint.
+                    formats. Connect a download API endpoint to enable actual file downloads.
                   </p>
                 </div>
               </motion.div>

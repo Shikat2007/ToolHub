@@ -1,7 +1,5 @@
 import { useCallback, useRef, useState } from "react";
 import { PDFDocument } from "pdf-lib";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -41,7 +39,6 @@ function formatFileSize(bytes: number): string {
 let fileCounter = 0;
 
 export default function MergePdf({ onBack }: MergePdfProps) {
-  const logUsage = useMutation(api.usage.logUsage);
   const [files, setFiles] = useState<PdfFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -180,14 +177,6 @@ export default function MergePdf({ onBack }: MergePdfProps) {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       setSuccess(true);
-
-      await logUsage({
-        toolId: "merge-pdf",
-        toolName: "Merge PDF",
-        inputSize: files.reduce((sum, f) => sum + f.file.size, 0),
-        outputSize: mergedBytes.length,
-        metadata: JSON.stringify({ pageCount: mergedPdf.getPageCount(), fileCount: files.length }),
-      });
     } catch (err) {
       setError(
         err instanceof Error
