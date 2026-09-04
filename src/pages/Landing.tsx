@@ -223,7 +223,7 @@ export default function Landing() {
               Everything your team needs
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              32 fully active tools across 11 categories — no placeholders,
+              31 fully active tools across 10 categories — no placeholders,
               no coming soon.
             </p>
           </motion.div>
