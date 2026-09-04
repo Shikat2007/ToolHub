@@ -14,17 +14,14 @@ import {
   Wrench,
   Menu,
   X,
-  LogOut,
   Search,
   ChevronRight,
-  Shield,
   LayoutGrid,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import {
   categories,
@@ -59,7 +56,6 @@ function ToolIcon({ name, className }: { name: string; className?: string }) {
 }
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [activeTool, setActiveTool] = useState<ToolDef | null>(null);
   const [activeCategory, setActiveCategory] = useState<ToolCategory | "all">(
@@ -67,11 +63,6 @@ export default function Dashboard() {
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-  };
 
   const openTool = (tool: ToolDef) => {
     if (tool.comingSoon) return;
@@ -190,51 +181,11 @@ export default function Dashboard() {
               );
             })}
 
-            {/* Admin link */}
-            <div>
-              <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-                Management
-              </p>
-              <button
-                onClick={() => {
-                  setActiveTool(null);
-                  setActiveCategory("all");
-                  setSearchQuery("");
-                  navigate("/admin");
-                }}
-                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer"
-              >
-                <Shield className="size-4 shrink-0" />
-                <span className="truncate">Admin</span>
-              </button>
-            </div>
+
           </div>
         </ScrollArea>
 
-        {/* User */}
-        <div className="border-t border-border/60 p-3">
-          <div className="flex items-center gap-2.5 rounded-lg px-3 py-2">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
-              {user?.name?.charAt(0)?.toUpperCase() || "U"}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">
-                {user?.name || "User"}
-              </p>
-              <p className="truncate text-[11px] text-muted-foreground">
-                {user?.email || ""}
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleSignOut}
-              className="size-8 shrink-0 cursor-pointer text-muted-foreground hover:text-foreground"
-            >
-              <LogOut className="size-3.5" />
-            </Button>
-          </div>
-        </div>
+
       </aside>
 
       {/* Main */}
@@ -344,7 +295,6 @@ export default function Dashboard() {
                   <div className="mb-8">
                     <h1 className="text-xl font-bold tracking-tight">
                       Welcome
-                      {user?.name ? `, ${user.name}` : ""}
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Select a tool from the sidebar or the grid below.
