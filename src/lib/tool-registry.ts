@@ -14,7 +14,11 @@ export type ToolCategory =
   | "image"
   | "text"
   | "utility"
-  | "media";
+  | "media"
+  | "calculator"
+  | "developer"
+  | "creator"
+  | "network";
 
 export interface CategoryDef {
   id: ToolCategory;
@@ -29,142 +33,58 @@ export const categories: CategoryDef[] = [
   { id: "text", label: "Text & Productivity", icon: "Type" },
   { id: "utility", label: "Daily Utilities", icon: "Wrench" },
   { id: "media", label: "Media Tools", icon: "Download" },
+  { id: "calculator", label: "Calculators", icon: "Calculator" },
+  { id: "developer", label: "Developer Tools", icon: "Code" },
+  { id: "creator", label: "Content Creator", icon: "FilePlus" },
+  { id: "network", label: "Network & Device", icon: "Monitor" },
 ];
 
 export const tools: ToolDef[] = [
   // ── PDF & Document ─────────────────────────────────────────
-  {
-    id: "merge-pdf",
-    name: "Merge PDF",
-    description: "Combine multiple PDF files into a single document.",
-    icon: "Combine",
-    category: "pdf",
-    routeKey: "merge-pdf",
-  },
-  {
-    id: "split-pdf",
-    name: "Split PDF",
-    description: "Extract pages from a PDF into separate files.",
-    icon: "Scissors",
-    category: "pdf",
-    routeKey: "split-pdf",
-  },
-  {
-    id: "compress-pdf",
-    name: "Compress PDF",
-    description: "Reduce PDF file size while maintaining quality.",
-    icon: "Minimize2",
-    category: "pdf",
-    routeKey: "compress-pdf",
-  },
-  {
-    id: "pdf-to-image",
-    name: "PDF to Image",
-    description: "Convert PDF pages to PNG or JPEG images.",
-    icon: "Image",
-    category: "pdf",
-    routeKey: "pdf-to-image",
-  },
+  { id: "merge-pdf", name: "Merge PDF", description: "Combine multiple PDF files into a single document.", icon: "Combine", category: "pdf", routeKey: "merge-pdf" },
+  { id: "split-pdf", name: "Split PDF", description: "Extract pages from a PDF into separate files.", icon: "Scissors", category: "pdf", routeKey: "split-pdf" },
+  { id: "compress-pdf", name: "Compress PDF", description: "Reduce PDF file size while maintaining quality.", icon: "Minimize2", category: "pdf", routeKey: "compress-pdf" },
+  { id: "pdf-to-image", name: "PDF to Image", description: "Convert PDF pages to PNG or JPEG images.", icon: "Image", category: "pdf", routeKey: "pdf-to-image" },
 
   // ── Document Scanner ───────────────────────────────────────
-  {
-    id: "doc-scanner",
-    name: "Document Scanner",
-    description:
-      "Scan documents with your camera, enhance with filters, export as JPG, PNG, or PDF.",
-    icon: "ScanLine",
-    category: "scan",
-    routeKey: "doc-scanner",
-  },
-  {
-    id: "ocr",
-    name: "Image to Text",
-    description: "Extract readable text from images using OCR.",
-    icon: "ScanText",
-    category: "scan",
-    routeKey: "ocr",
-  },
+  { id: "doc-scanner", name: "Document Scanner", description: "Scan documents with your camera, enhance with filters, export as JPG, PNG, or PDF.", icon: "ScanLine", category: "scan", routeKey: "doc-scanner" },
+  { id: "ocr", name: "Image to Text", description: "Extract readable text from images using OCR.", icon: "ScanText", category: "scan", routeKey: "ocr" },
 
   // ── Image & Photo ──────────────────────────────────────────
-  {
-    id: "image-compress",
-    name: "Image Compressor",
-    description: "Reduce image file size with quality control.",
-    icon: "Shrink",
-    category: "image",
-    routeKey: "image-compress",
-  },
-  {
-    id: "image-resize",
-    name: "Image Resizer",
-    description: "Resize and crop images with aspect ratio presets.",
-    icon: "Crop",
-    category: "image",
-    routeKey: "image-resize",
-  },
-  {
-    id: "image-convert",
-    name: "Image Format Converter",
-    description: "Convert between JPG, PNG, and WebP formats.",
-    icon: "ArrowRightLeft",
-    category: "image",
-    routeKey: "image-convert",
-  },
+  { id: "image-compress", name: "Image Compressor", description: "Reduce image file size with quality control.", icon: "Shrink", category: "image", routeKey: "image-compress" },
+  { id: "image-resize", name: "Image Resizer", description: "Resize and crop images with aspect ratio presets.", icon: "Crop", category: "image", routeKey: "image-resize" },
+  { id: "image-convert", name: "Image Format Converter", description: "Convert between JPG, PNG, and WebP formats.", icon: "ArrowRightLeft", category: "image", routeKey: "image-convert" },
 
   // ── Text & Productivity ────────────────────────────────────
-  {
-    id: "text-counter",
-    name: "Word Counter",
-    description: "Count words, characters, sentences, and paragraphs.",
-    icon: "Hash",
-    category: "text",
-    routeKey: "text-counter",
-  },
-  {
-    id: "text-case",
-    name: "Text Case Converter",
-    description: "Convert text to UPPERCASE, lowercase, Title Case, and more.",
-    icon: "CaseSensitive",
-    category: "text",
-    routeKey: "text-case",
-  },
+  { id: "text-counter", name: "Word Counter", description: "Count words, characters, sentences, and paragraphs.", icon: "Hash", category: "text", routeKey: "text-counter" },
+  { id: "text-case", name: "Text Case Converter", description: "Convert text to UPPERCASE, lowercase, Title Case, and more.", icon: "CaseSensitive", category: "text", routeKey: "text-case" },
 
   // ── Daily Utilities ────────────────────────────────────────
-  {
-    id: "qr-code",
-    name: "QR Code Generator",
-    description: "Generate and scan QR codes from text or images.",
-    icon: "QrCode",
-    category: "utility",
-    routeKey: "qr-code",
-  },
-  {
-    id: "password-gen",
-    name: "Password Generator",
-    description: "Generate strong, customizable passwords.",
-    icon: "KeyRound",
-    category: "utility",
-    routeKey: "password-gen",
-  },
+  { id: "qr-code", name: "QR Code Generator", description: "Generate and scan QR codes from text or images.", icon: "QrCode", category: "utility", routeKey: "qr-code" },
+  { id: "password-gen", name: "Password Generator", description: "Generate strong, customizable passwords.", icon: "KeyRound", category: "utility", routeKey: "password-gen" },
 
   // ── Media Tools ────────────────────────────────────────────
-  {
-    id: "video-downloader",
-    name: "Video Downloader",
-    description:
-      "Download videos from YouTube, Instagram, TikTok, and more.",
-    icon: "Globe",
-    category: "media",
-    routeKey: "video-downloader",
-  },
-  {
-    id: "audio-extractor",
-    name: "Audio Extractor",
-    description: "Extract audio tracks from video files.",
-    icon: "Music",
-    category: "media",
-    routeKey: "audio-extractor",
-  },
+  { id: "video-downloader", name: "Video Downloader", description: "Download videos from YouTube, Instagram, TikTok, and more.", icon: "Globe", category: "media", routeKey: "video-downloader" },
+  { id: "audio-extractor", name: "Audio Extractor", description: "Extract audio tracks from video files.", icon: "Music", category: "media", routeKey: "audio-extractor" },
+
+  // ── Calculators ────────────────────────────────────────────
+  { id: "age-calc", name: "Age Calculator", description: "Compute exact age in years, months, days, and hours.", icon: "Cake", category: "calculator", routeKey: "age-calc" },
+  { id: "percent-calc", name: "Percentage Calculator", description: "Calculate discounts, markups, and ratio percentages.", icon: "Percent", category: "calculator", routeKey: "percent-calc" },
+  { id: "unit-converter", name: "Unit Converter", description: "Convert length, weight, and temperature instantly.", icon: "Scale", category: "calculator", routeKey: "unit-converter" },
+  { id: "bmi-calc", name: "BMI Calculator", description: "Calculate Body Mass Index with health category indicator.", icon: "HeartPulse", category: "calculator", routeKey: "bmi-calc" },
+
+  // ── Developer Tools ────────────────────────────────────────
+  { id: "json-formatter", name: "JSON Formatter", description: "Beautify, minify, and validate JSON in real time.", icon: "Braces", category: "developer", routeKey: "json-formatter" },
+  { id: "base64-tool", name: "Base64 Encoder/Decoder", description: "Encode and decode Base64 text strings instantly.", icon: "Binary", category: "developer", routeKey: "base64-tool" },
+  { id: "markdown-preview", name: "Markdown Previewer", description: "Live split-screen Markdown to HTML preview.", icon: "FileCode", category: "developer", routeKey: "markdown-preview" },
+  { id: "hash-generator", name: "Hash Generator", description: "Generate SHA-256 and MD5 hashes from text.", icon: "Fingerprint", category: "developer", routeKey: "hash-generator" },
+
+  // ── Content Creator ────────────────────────────────────────
+  { id: "text-diff", name: "Text Diff Checker", description: "Compare two text blocks side-by-side with highlights.", icon: "GitCompare", category: "creator", routeKey: "text-diff" },
+  { id: "lorem-ipsum", name: "Lorem Ipsum Generator", description: "Generate dummy text paragraphs, sentences, or words.", icon: "AlignLeft", category: "creator", routeKey: "lorem-ipsum" },
+
+  // ── Network & Device ───────────────────────────────────────
+  { id: "device-info", name: "Device & Browser Info", description: "Display screen, browser, viewport, and network details.", icon: "Monitor", category: "network", routeKey: "device-info" },
 ];
 
 export function getToolsByCategory(category: ToolCategory): ToolDef[] {

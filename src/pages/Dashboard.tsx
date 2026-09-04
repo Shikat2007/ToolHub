@@ -1,41 +1,18 @@
 import { lazy, Suspense, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  FileText,
-  Combine,
-  Scissors,
-  Minimize2,
-  Image,
-  Download,
-  Globe,
-  Wrench,
-  Menu,
-  X,
-  Search,
-  ChevronRight,
-  LayoutGrid,
-  ScanLine,
-  ScanText,
-  Shrink,
-  Crop,
-  ArrowRightLeft,
-  Hash,
-  CaseSensitive,
-  QrCode,
-  KeyRound,
-  Music,
+  FileText, Combine, Scissors, Minimize2, Image, Download, Globe, Wrench,
+  Menu, X, Search, ChevronRight, LayoutGrid, ScanLine, ScanText, Shrink,
+  Crop, ArrowRightLeft, Hash, CaseSensitive, QrCode, KeyRound, Music,
+  Calculator, Code, FilePlus, Monitor, Cake, Percent, Scale, HeartPulse,
+  Braces, Binary, FileCode, Fingerprint, GitCompare, AlignLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router";
-import {
-  categories,
-  getToolsByCategory,
-  type ToolDef,
-  type ToolCategory,
-} from "@/lib/tool-registry";
+import { categories, getToolsByCategory, type ToolDef, type ToolCategory } from "@/lib/tool-registry";
 import { Input } from "@/components/ui/input";
 
 // ── Lazy tool components ──────────────────────────────────────
@@ -54,12 +31,25 @@ const QRCodeTool = lazy(() => import("@/components/tools/QRCode"));
 const PasswordGenerator = lazy(() => import("@/components/tools/PasswordGenerator"));
 const MediaDownloader = lazy(() => import("@/components/tools/MediaDownloader"));
 const AudioExtractor = lazy(() => import("@/components/tools/AudioExtractor"));
+const AgeCalculator = lazy(() => import("@/components/tools/AgeCalculator"));
+const PercentCalculator = lazy(() => import("@/components/tools/PercentCalculator"));
+const UnitConverter = lazy(() => import("@/components/tools/UnitConverter"));
+const BMICalculator = lazy(() => import("@/components/tools/BMICalculator"));
+const JsonFormatter = lazy(() => import("@/components/tools/JsonFormatter"));
+const Base64Tool = lazy(() => import("@/components/tools/Base64Tool"));
+const MarkdownPreview = lazy(() => import("@/components/tools/MarkdownPreview"));
+const HashGenerator = lazy(() => import("@/components/tools/HashGenerator"));
+const TextDiff = lazy(() => import("@/components/tools/TextDiff"));
+const LoremIpsum = lazy(() => import("@/components/tools/LoremIpsum"));
+const DeviceInfo = lazy(() => import("@/components/tools/DeviceInfo"));
 
 // ── Icon map ──────────────────────────────────────────────────
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   FileText, Combine, Scissors, Minimize2, Image, Download, Globe, Wrench,
   ScanLine, ScanText, Shrink, Crop, ArrowRightLeft, Hash, CaseSensitive,
-  QrCode, KeyRound, Music,
+  QrCode, KeyRound, Music, Calculator, Code, FilePlus, Monitor, Cake,
+  Percent, Scale, HeartPulse, Braces, Binary, FileCode, Fingerprint,
+  GitCompare, AlignLeft,
 };
 
 function ToolIcon({ name, className }: { name: string; className?: string }) {
@@ -67,8 +57,20 @@ function ToolIcon({ name, className }: { name: string; className?: string }) {
   return <Icon className={className} />;
 }
 
-// ── All category IDs ──────────────────────────────────────────
-const ALL_CATEGORIES: ToolCategory[] = ["pdf", "scan", "image", "text", "utility", "media"];
+const ALL_CATEGORIES: ToolCategory[] = ["pdf", "scan", "image", "text", "utility", "media", "calculator", "developer", "creator", "network"];
+
+// ── Tool renderer map ─────────────────────────────────────────
+const toolComponents: Record<string, React.ComponentType<{ onBack: () => void }>> = {
+  "merge-pdf": MergePdf, "split-pdf": SplitPdf, "compress-pdf": CompressPdf,
+  "pdf-to-image": PdfToImage, "doc-scanner": DocumentScanner, "ocr": OCR,
+  "image-compress": ImageCompressor, "image-resize": ImageResizer, "image-convert": ImageFormatConverter,
+  "text-counter": TextCounter, "text-case": TextCase, "qr-code": QRCodeTool,
+  "password-gen": PasswordGenerator, "video-downloader": MediaDownloader, "audio-extractor": AudioExtractor,
+  "age-calc": AgeCalculator, "percent-calc": PercentCalculator, "unit-converter": UnitConverter,
+  "bmi-calc": BMICalculator, "json-formatter": JsonFormatter, "base64-tool": Base64Tool,
+  "markdown-preview": MarkdownPreview, "hash-generator": HashGenerator, "text-diff": TextDiff,
+  "lorem-ipsum": LoremIpsum, "device-info": DeviceInfo,
+};
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -77,32 +79,22 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const openTool = (tool: ToolDef) => {
-    if (tool.comingSoon) return;
-    setActiveTool(tool);
-    setSidebarOpen(false);
-  };
-
+  const openTool = (tool: ToolDef) => { if (tool.comingSoon) return; setActiveTool(tool); setSidebarOpen(false); };
   const goBack = () => setActiveTool(null);
 
   const allFilteredTools = searchQuery
     ? categories.flatMap((c) => getToolsByCategory(c.id)).filter(
-        (t) => t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.description.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
+        (t) => t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.description.toLowerCase().includes(searchQuery.toLowerCase()))
     : null;
+
+  const ToolComponent = activeTool ? toolComponents[activeTool.id] : null;
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Mobile overlay */}
       <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setSidebarOpen(false)}
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden" />
-        )}
+        {sidebarOpen && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSidebarOpen(false)} className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden" />}
       </AnimatePresence>
 
-      {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border/60 bg-sidebar transition-transform duration-200 lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-16 items-center gap-2.5 border-b border-border/60 px-5">
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Wrench className="size-4" /></div>
@@ -116,7 +108,6 @@ export default function Dashboard() {
               className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${!activeTool && activeCategory === "all" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}>
               <LayoutGrid className="size-4" /> All Tools
             </button>
-
             {categories.map((cat) => {
               const catTools = getToolsByCategory(cat.id);
               return (
@@ -139,7 +130,6 @@ export default function Dashboard() {
         </ScrollArea>
       </aside>
 
-      {/* Main */}
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border/60 px-4 lg:px-6">
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)} className="size-9 lg:hidden cursor-pointer"><Menu className="size-5" /></Button>
@@ -155,11 +145,11 @@ export default function Dashboard() {
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/50" />
                 <Input placeholder="Search tools..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="h-9 pl-9 text-sm" />
               </div>
-              <div className="hidden items-center gap-1.5 sm:flex">
+              <div className="hidden items-center gap-1 xl:flex">
                 {(["all", ...ALL_CATEGORIES] as const).map((cat) => (
                   <Button key={cat} variant={activeCategory === cat ? "default" : "ghost"} size="sm"
                     onClick={() => { setActiveCategory(cat); setSearchQuery(""); }}
-                    className="cursor-pointer text-xs">
+                    className="cursor-pointer text-[11px] px-2">
                     {cat === "all" ? "All" : categories.find((c) => c.id === cat)?.label}
                   </Button>
                 ))}
@@ -172,22 +162,8 @@ export default function Dashboard() {
           <AnimatePresence mode="wait">
             {activeTool ? (
               <motion.div key={activeTool.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="h-full">
-                <Suspense fallback={<div className="flex h-full items-center justify-center"><div className="flex items-center gap-2 text-sm text-muted-foreground"><div className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" /> Loading tool...</div></div>}>
-                  {activeTool.id === "merge-pdf" && <MergePdf onBack={goBack} />}
-                  {activeTool.id === "split-pdf" && <SplitPdf onBack={goBack} />}
-                  {activeTool.id === "compress-pdf" && <CompressPdf onBack={goBack} />}
-                  {activeTool.id === "pdf-to-image" && <PdfToImage onBack={goBack} />}
-                  {activeTool.id === "doc-scanner" && <DocumentScanner onBack={goBack} />}
-                  {activeTool.id === "ocr" && <OCR onBack={goBack} />}
-                  {activeTool.id === "image-compress" && <ImageCompressor onBack={goBack} />}
-                  {activeTool.id === "image-resize" && <ImageResizer onBack={goBack} />}
-                  {activeTool.id === "image-convert" && <ImageFormatConverter onBack={goBack} />}
-                  {activeTool.id === "text-counter" && <TextCounter onBack={goBack} />}
-                  {activeTool.id === "text-case" && <TextCase onBack={goBack} />}
-                  {activeTool.id === "qr-code" && <QRCodeTool onBack={goBack} />}
-                  {activeTool.id === "password-gen" && <PasswordGenerator onBack={goBack} />}
-                  {activeTool.id === "video-downloader" && <MediaDownloader onBack={goBack} />}
-                  {activeTool.id === "audio-extractor" && <AudioExtractor onBack={goBack} />}
+                <Suspense fallback={<div className="flex h-full items-center justify-center"><div className="flex items-center gap-2 text-sm text-muted-foreground"><div className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" /> Loading...</div></div>}>
+                  {ToolComponent && <ToolComponent onBack={goBack} />}
                 </Suspense>
               </motion.div>
             ) : (
