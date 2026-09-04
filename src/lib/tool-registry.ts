@@ -11,7 +11,7 @@ export interface ToolDef {
 export type ToolCategory =
   | "pdf" | "scan" | "image" | "text" | "utility"
   | "media" | "calculator" | "developer" | "creator"
-  | "network" | "network-sec";
+  | "network";
 
 export interface CategoryDef {
   id: ToolCategory;
@@ -29,8 +29,7 @@ export const categories: CategoryDef[] = [
   { id: "calculator", label: "Calculators", icon: "Calculator" },
   { id: "developer", label: "Developer Tools", icon: "Code" },
   { id: "creator", label: "Content Creator", icon: "FilePlus" },
-  { id: "network", label: "Network & Device", icon: "Monitor" },
-  { id: "network-sec", label: "Network & Security", icon: "Shield" },
+  { id: "network", label: "Network & Utilities", icon: "Shield" },
 ];
 
 export const tools: ToolDef[] = [
@@ -60,12 +59,11 @@ export const tools: ToolDef[] = [
   { id: "text-diff", name: "Text Diff Checker", description: "Compare two text blocks side-by-side with highlights.", icon: "GitCompare", category: "creator", routeKey: "text-diff" },
   { id: "lorem-ipsum", name: "Lorem Ipsum Generator", description: "Generate dummy text paragraphs, sentences, or words.", icon: "AlignLeft", category: "creator", routeKey: "lorem-ipsum" },
   { id: "device-info", name: "Device & Browser Info", description: "Display screen, browser, viewport, and network details.", icon: "Monitor", category: "network", routeKey: "device-info" },
-  // ── Network & Security (NEW) ──────────────────────────────
-  { id: "mac-lookup", name: "MAC Address Lookup", description: "Validate MAC format and identify device vendor/OUI.", icon: "Fingerprint", category: "network-sec", routeKey: "mac-lookup" },
-  { id: "subnet-calc", name: "Subnet / CIDR Calculator", description: "Calculate network, broadcast, mask, and host range from CIDR.", icon: "Network", category: "network-sec", routeKey: "subnet-calc" },
-  { id: "uuid-gen", name: "UUID Generator", description: "Generate random v4 UUIDs with one-click copy.", icon: "Hash", category: "network-sec", routeKey: "uuid-gen" },
-  { id: "url-encoder", name: "URL Encoder / Decoder", description: "Encode and decode URLs and query strings.", icon: "Link", category: "network-sec", routeKey: "url-encoder" },
-  { id: "password-strength", name: "Password Strength Meter", description: "Analyze password entropy, complexity, and weaknesses.", icon: "ShieldCheck", category: "network-sec", routeKey: "password-strength" },
+  { id: "mac-lookup", name: "MAC Address Lookup", description: "Validate MAC format and identify device vendor/OUI.", icon: "Fingerprint", category: "network", routeKey: "mac-lookup" },
+  { id: "subnet-calc", name: "Subnet / CIDR Calculator", description: "Calculate network, broadcast, mask, and host range from CIDR.", icon: "Network", category: "network", routeKey: "subnet-calc" },
+  { id: "uuid-gen", name: "UUID Generator", description: "Generate random v4 UUIDs with one-click copy.", icon: "Hash", category: "network", routeKey: "uuid-gen" },
+  { id: "url-encoder", name: "URL Encoder / Decoder", description: "Encode and decode URLs and query strings.", icon: "Link", category: "network", routeKey: "url-encoder" },
+  { id: "password-strength", name: "Password Strength Meter", description: "Analyze password entropy, complexity, and weaknesses.", icon: "ShieldCheck", category: "network", routeKey: "password-strength" },
 ];
 
 export function getToolsByCategory(category: ToolCategory): ToolDef[] {

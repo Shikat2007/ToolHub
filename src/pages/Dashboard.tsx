@@ -68,7 +68,7 @@ function ToolIcon({ name, className }: { name: string; className?: string }) {
   return <Icon className={className} />;
 }
 
-const ALL_CATEGORIES: ToolCategory[] = ["pdf", "scan", "image", "text", "utility", "media", "calculator", "developer", "creator", "network", "network-sec"];
+const ALL_CATEGORIES: ToolCategory[] = ["pdf", "scan", "image", "text", "utility", "media", "calculator", "developer", "creator", "network"];
 
 const toolComponents: Record<string, React.ComponentType<{ onBack: () => void }>> = {
   "merge-pdf": MergePdf, "split-pdf": SplitPdf, "compress-pdf": CompressPdf,
