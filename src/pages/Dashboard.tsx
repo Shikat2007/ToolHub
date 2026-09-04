@@ -17,6 +17,7 @@ import {
   Search,
   ChevronRight,
   LayoutGrid,
+  ScanLine,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,6 +35,7 @@ import { Input } from "@/components/ui/input";
 const MergePdf = lazy(() => import("@/components/tools/MergePdf"));
 const SplitPdf = lazy(() => import("@/components/tools/SplitPdf"));
 const CompressPdf = lazy(() => import("@/components/tools/CompressPdf"));
+const DocumentScanner = lazy(() => import("@/components/tools/DocumentScanner"));
 const MediaDownloader = lazy(() => import("@/components/tools/MediaDownloader"));
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -48,6 +50,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Brain,
   Rocket,
   Wrench,
+  ScanLine,
 };
 
 function ToolIcon({ name, className }: { name: string; className?: string }) {
@@ -224,7 +227,7 @@ export default function Dashboard() {
                 />
               </div>
               <div className="hidden items-center gap-1.5 sm:flex">
-                {(["all", "pdf", "media", "future"] as const).map((cat) => (
+                {(["all", "pdf", "scan", "media", "future"] as const).map((cat) => (
                   <Button
                     key={cat}
                     variant={activeCategory === cat ? "default" : "ghost"}
@@ -275,6 +278,9 @@ export default function Dashboard() {
                   )}
                   {activeTool.id === "compress-pdf" && (
                     <CompressPdf onBack={goBack} />
+                  )}
+                  {activeTool.id === "doc-scanner" && (
+                    <DocumentScanner onBack={goBack} />
                   )}
                   {activeTool.id === "video-downloader" && (
                     <MediaDownloader onBack={goBack} />

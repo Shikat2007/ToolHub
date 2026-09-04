@@ -12,7 +12,7 @@ export interface ToolDef {
   comingSoon?: boolean;
 }
 
-export type ToolCategory = "pdf" | "media" | "future";
+export type ToolCategory = "pdf" | "scan" | "media" | "future";
 
 export interface CategoryDef {
   id: ToolCategory;
@@ -22,6 +22,7 @@ export interface CategoryDef {
 
 export const categories: CategoryDef[] = [
   { id: "pdf", label: "PDF Tools", icon: "FileText" },
+  { id: "scan", label: "Document Scanner", icon: "ScanLine" },
   { id: "media", label: "Media Downloaders", icon: "Download" },
   { id: "future", label: "Future Tools", icon: "Sparkles" },
 ];
@@ -59,6 +60,17 @@ export const tools: ToolDef[] = [
     icon: "Image",
     category: "pdf",
     comingSoon: true,
+  },
+
+  // ── Document Scanner ───────────────────────────────────────
+  {
+    id: "doc-scanner",
+    name: "Document Scanner",
+    description:
+      "Scan documents with your camera, enhance with filters, export as JPG, PNG, or PDF.",
+    icon: "ScanLine",
+    category: "scan",
+    routeKey: "doc-scanner",
   },
 
   // ── Media Downloaders ──────────────────────────────────────
