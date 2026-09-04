@@ -7,10 +7,7 @@ import {
   Minimize2,
   Image,
   Download,
-  Facebook,
   Globe,
-  Brain,
-  Rocket,
   Wrench,
   Menu,
   X,
@@ -18,6 +15,15 @@ import {
   ChevronRight,
   LayoutGrid,
   ScanLine,
+  ScanText,
+  Shrink,
+  Crop,
+  ArrowRightLeft,
+  Hash,
+  CaseSensitive,
+  QrCode,
+  KeyRound,
+  Music,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,25 +38,28 @@ import {
 } from "@/lib/tool-registry";
 import { Input } from "@/components/ui/input";
 
+// ── Lazy tool components ──────────────────────────────────────
 const MergePdf = lazy(() => import("@/components/tools/MergePdf"));
 const SplitPdf = lazy(() => import("@/components/tools/SplitPdf"));
 const CompressPdf = lazy(() => import("@/components/tools/CompressPdf"));
+const PdfToImage = lazy(() => import("@/components/tools/PdfToImage"));
 const DocumentScanner = lazy(() => import("@/components/tools/DocumentScanner"));
+const OCR = lazy(() => import("@/components/tools/OCR"));
+const ImageCompressor = lazy(() => import("@/components/tools/ImageCompressor"));
+const ImageResizer = lazy(() => import("@/components/tools/ImageResizer"));
+const ImageFormatConverter = lazy(() => import("@/components/tools/ImageFormatConverter"));
+const TextCounter = lazy(() => import("@/components/tools/TextCounter"));
+const TextCase = lazy(() => import("@/components/tools/TextCase"));
+const QRCodeTool = lazy(() => import("@/components/tools/QRCode"));
+const PasswordGenerator = lazy(() => import("@/components/tools/PasswordGenerator"));
 const MediaDownloader = lazy(() => import("@/components/tools/MediaDownloader"));
+const AudioExtractor = lazy(() => import("@/components/tools/AudioExtractor"));
 
+// ── Icon map ──────────────────────────────────────────────────
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  FileText,
-  Combine,
-  Scissors,
-  Minimize2,
-  Image,
-  Download,
-  Facebook,
-  Globe,
-  Brain,
-  Rocket,
-  Wrench,
-  ScanLine,
+  FileText, Combine, Scissors, Minimize2, Image, Download, Globe, Wrench,
+  ScanLine, ScanText, Shrink, Crop, ArrowRightLeft, Hash, CaseSensitive,
+  QrCode, KeyRound, Music,
 };
 
 function ToolIcon({ name, className }: { name: string; className?: string }) {
@@ -58,12 +67,13 @@ function ToolIcon({ name, className }: { name: string; className?: string }) {
   return <Icon className={className} />;
 }
 
+// ── All category IDs ──────────────────────────────────────────
+const ALL_CATEGORIES: ToolCategory[] = ["pdf", "scan", "image", "text", "utility", "media"];
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [activeTool, setActiveTool] = useState<ToolDef | null>(null);
-  const [activeCategory, setActiveCategory] = useState<ToolCategory | "all">(
-    "all",
-  );
+  const [activeCategory, setActiveCategory] = useState<ToolCategory | "all">("all");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -76,13 +86,9 @@ export default function Dashboard() {
   const goBack = () => setActiveTool(null);
 
   const allFilteredTools = searchQuery
-    ? categories
-        .flatMap((c) => getToolsByCategory(c.id))
-        .filter(
-          (t) =>
-            t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            t.description.toLowerCase().includes(searchQuery.toLowerCase()),
-        )
+    ? categories.flatMap((c) => getToolsByCategory(c.id)).filter(
+        (t) => t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.description.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
     : null;
 
   return (
@@ -90,128 +96,56 @@ export default function Dashboard() {
       {/* Mobile overlay */}
       <AnimatePresence>
         {sidebarOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setSidebarOpen(false)}
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
-          />
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden" />
         )}
       </AnimatePresence>
 
       {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border/60 bg-sidebar transition-transform duration-200 lg:static lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        {/* Brand */}
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border/60 bg-sidebar transition-transform duration-200 lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-16 items-center gap-2.5 border-b border-border/60 px-5">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Wrench className="size-4" />
-          </div>
+          <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Wrench className="size-4" /></div>
           <span className="text-base font-bold tracking-tight">Tool Hub</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(false)}
-            className="ml-auto size-8 lg:hidden cursor-pointer"
-          >
-            <X className="size-4" />
-          </Button>
+          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)} className="ml-auto size-8 lg:hidden cursor-pointer"><X className="size-4" /></Button>
         </div>
 
-        {/* Nav */}
         <ScrollArea className="flex-1 px-3 py-4">
           <div className="space-y-6">
-            {/* All tools */}
-            <button
-              onClick={() => {
-                setActiveTool(null);
-                setActiveCategory("all");
-                setSearchQuery("");
-              }}
-              className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                !activeTool && activeCategory === "all"
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
-              }`}
-            >
-              <LayoutGrid className="size-4" />
-              All Tools
+            <button onClick={() => { setActiveTool(null); setActiveCategory("all"); setSearchQuery(""); }}
+              className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${!activeTool && activeCategory === "all" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}>
+              <LayoutGrid className="size-4" /> All Tools
             </button>
 
-            {/* Categories */}
             {categories.map((cat) => {
               const catTools = getToolsByCategory(cat.id);
               return (
                 <div key={cat.id}>
-                  <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-                    {cat.label}
-                  </p>
+                  <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">{cat.label}</p>
                   <div className="space-y-0.5">
                     {catTools.map((tool) => (
-                      <button
-                        key={tool.id}
-                        onClick={() => openTool(tool)}
-                        disabled={tool.comingSoon}
-                        className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors cursor-pointer ${
-                          activeTool?.id === tool.id
-                            ? "bg-primary/10 font-medium text-primary"
-                            : tool.comingSoon
-                              ? "cursor-default text-muted-foreground/40"
-                              : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                        }`}
-                      >
-                        <ToolIcon
-                          name={tool.icon}
-                          className="size-4 shrink-0"
-                        />
+                      <button key={tool.id} onClick={() => openTool(tool)} disabled={tool.comingSoon}
+                        className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors cursor-pointer ${activeTool?.id === tool.id ? "bg-primary/10 font-medium text-primary" : tool.comingSoon ? "cursor-default text-muted-foreground/40" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}>
+                        <ToolIcon name={tool.icon} className="size-4 shrink-0" />
                         <span className="truncate">{tool.name}</span>
-                        {tool.comingSoon && (
-                          <Badge
-                            variant="secondary"
-                            className="ml-auto shrink-0 text-[10px]"
-                          >
-                            Soon
-                          </Badge>
-                        )}
+                        {tool.comingSoon && <Badge variant="secondary" className="ml-auto shrink-0 text-[10px]">Soon</Badge>}
                       </button>
                     ))}
                   </div>
                 </div>
               );
             })}
-
-
           </div>
         </ScrollArea>
-
-
       </aside>
 
       {/* Main */}
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {/* Top bar */}
         <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border/60 px-4 lg:px-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(true)}
-            className="size-9 lg:hidden cursor-pointer"
-          >
-            <Menu className="size-5" />
-          </Button>
-
+          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)} className="size-9 lg:hidden cursor-pointer"><Menu className="size-5" /></Button>
           {activeTool ? (
             <div className="flex items-center gap-2 text-sm">
-              <button
-                onClick={goBack}
-                className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              >
-                Tools
-              </button>
+              <button onClick={goBack} className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer">Tools</button>
               <ChevronRight className="size-3.5 text-muted-foreground/50" />
               <span className="font-medium">{activeTool.name}</span>
             </div>
@@ -219,28 +153,14 @@ export default function Dashboard() {
             <>
               <div className="relative max-w-sm flex-1">
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/50" />
-                <Input
-                  placeholder="Search tools..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-9 pl-9 text-sm"
-                />
+                <Input placeholder="Search tools..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="h-9 pl-9 text-sm" />
               </div>
               <div className="hidden items-center gap-1.5 sm:flex">
-                {(["all", "pdf", "scan", "media", "future"] as const).map((cat) => (
-                  <Button
-                    key={cat}
-                    variant={activeCategory === cat ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => {
-                      setActiveCategory(cat);
-                      setSearchQuery("");
-                    }}
-                    className="cursor-pointer text-xs"
-                  >
-                    {cat === "all"
-                      ? "All"
-                      : categories.find((c) => c.id === cat)?.label}
+                {(["all", ...ALL_CATEGORIES] as const).map((cat) => (
+                  <Button key={cat} variant={activeCategory === cat ? "default" : "ghost"} size="sm"
+                    onClick={() => { setActiveCategory(cat); setSearchQuery(""); }}
+                    className="cursor-pointer text-xs">
+                    {cat === "all" ? "All" : categories.find((c) => c.id === cat)?.label}
                   </Button>
                 ))}
               </div>
@@ -248,75 +168,40 @@ export default function Dashboard() {
           )}
         </header>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto">
           <AnimatePresence mode="wait">
             {activeTool ? (
-              <motion.div
-                key={activeTool.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-                className="h-full"
-              >
-                <Suspense
-                  fallback={
-                    <div className="flex h-full items-center justify-center">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <div className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                        Loading tool...
-                      </div>
-                    </div>
-                  }
-                >
-                  {activeTool.id === "merge-pdf" && (
-                    <MergePdf onBack={goBack} />
-                  )}
-                  {activeTool.id === "split-pdf" && (
-                    <SplitPdf onBack={goBack} />
-                  )}
-                  {activeTool.id === "compress-pdf" && (
-                    <CompressPdf onBack={goBack} />
-                  )}
-                  {activeTool.id === "doc-scanner" && (
-                    <DocumentScanner onBack={goBack} />
-                  )}
-                  {activeTool.id === "video-downloader" && (
-                    <MediaDownloader onBack={goBack} />
-                  )}
+              <motion.div key={activeTool.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="h-full">
+                <Suspense fallback={<div className="flex h-full items-center justify-center"><div className="flex items-center gap-2 text-sm text-muted-foreground"><div className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" /> Loading tool...</div></div>}>
+                  {activeTool.id === "merge-pdf" && <MergePdf onBack={goBack} />}
+                  {activeTool.id === "split-pdf" && <SplitPdf onBack={goBack} />}
+                  {activeTool.id === "compress-pdf" && <CompressPdf onBack={goBack} />}
+                  {activeTool.id === "pdf-to-image" && <PdfToImage onBack={goBack} />}
+                  {activeTool.id === "doc-scanner" && <DocumentScanner onBack={goBack} />}
+                  {activeTool.id === "ocr" && <OCR onBack={goBack} />}
+                  {activeTool.id === "image-compress" && <ImageCompressor onBack={goBack} />}
+                  {activeTool.id === "image-resize" && <ImageResizer onBack={goBack} />}
+                  {activeTool.id === "image-convert" && <ImageFormatConverter onBack={goBack} />}
+                  {activeTool.id === "text-counter" && <TextCounter onBack={goBack} />}
+                  {activeTool.id === "text-case" && <TextCase onBack={goBack} />}
+                  {activeTool.id === "qr-code" && <QRCodeTool onBack={goBack} />}
+                  {activeTool.id === "password-gen" && <PasswordGenerator onBack={goBack} />}
+                  {activeTool.id === "video-downloader" && <MediaDownloader onBack={goBack} />}
+                  {activeTool.id === "audio-extractor" && <AudioExtractor onBack={goBack} />}
                 </Suspense>
               </motion.div>
             ) : (
-              <motion.div
-                key="grid"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-                className="p-6 lg:p-8"
-              >
-                {/* Welcome */}
+              <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="p-6 lg:p-8">
                 {!searchQuery && (
                   <div className="mb-8">
-                    <h1 className="text-xl font-bold tracking-tight">
-                      Welcome
-                    </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Select a tool from the sidebar or the grid below.
-                    </p>
+                    <h1 className="text-xl font-bold tracking-tight">Welcome</h1>
+                    <p className="mt-1 text-sm text-muted-foreground">Select a tool from the sidebar or the grid below.</p>
                   </div>
                 )}
-
                 {searchQuery && allFilteredTools ? (
                   <>
-                    <h2 className="mb-1 text-lg font-semibold tracking-tight">
-                      Search results
-                    </h2>
-                    <p className="mb-5 text-sm text-muted-foreground">
-                      {allFilteredTools.length} tool
-                      {allFilteredTools.length !== 1 ? "s" : ""} found
-                    </p>
+                    <h2 className="mb-1 text-lg font-semibold tracking-tight">Search results</h2>
+                    <p className="mb-5 text-sm text-muted-foreground">{allFilteredTools.length} tool{allFilteredTools.length !== 1 ? "s" : ""} found</p>
                     <ToolGrid tools={allFilteredTools} onOpenTool={openTool} />
                   </>
                 ) : (
@@ -325,21 +210,8 @@ export default function Dashboard() {
                     return (
                       <div key={cat.id} className="mb-8 last:mb-0">
                         <div className="mb-4 flex items-center gap-2.5">
-                          <ToolIcon
-                            name={cat.icon}
-                            className="size-5 text-muted-foreground"
-                          />
-                          <h2 className="text-lg font-semibold tracking-tight">
-                            {cat.label}
-                          </h2>
-                          {cat.id === "future" && (
-                            <Badge
-                              variant="secondary"
-                              className="text-[10px]"
-                            >
-                              Coming soon
-                            </Badge>
-                          )}
+                          <ToolIcon name={cat.icon} className="size-5 text-muted-foreground" />
+                          <h2 className="text-lg font-semibold tracking-tight">{cat.label}</h2>
                         </div>
                         <ToolGrid tools={catTools} onOpenTool={openTool} />
                       </div>
@@ -355,53 +227,23 @@ export default function Dashboard() {
   );
 }
 
-/* ── Tool card grid ────────────────────────────────────────── */
-
-function ToolGrid({
-  tools,
-  onOpenTool,
-}: {
-  tools: ToolDef[];
-  onOpenTool: (tool: ToolDef) => void;
-}) {
+function ToolGrid({ tools, onOpenTool }: { tools: ToolDef[]; onOpenTool: (tool: ToolDef) => void }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {tools.map((tool) => (
-        <motion.div
-          key={tool.id}
-          whileHover={{ y: -2 }}
-          transition={{ duration: 0.15 }}
-        >
-          <Card
-            onClick={() => onOpenTool(tool)}
-            className={`group border-border/60 shadow-none transition-all duration-150 ${
-              tool.comingSoon
-                ? "cursor-default opacity-50"
-                : "cursor-pointer hover:border-primary/30 hover:shadow-md hover:shadow-primary/5"
-            }`}
-          >
+        <motion.div key={tool.id} whileHover={{ y: -2 }} transition={{ duration: 0.15 }}>
+          <Card onClick={() => onOpenTool(tool)}
+            className={`group border-border/60 shadow-none transition-all duration-150 ${tool.comingSoon ? "cursor-default opacity-50" : "cursor-pointer hover:border-primary/30 hover:shadow-md hover:shadow-primary/5"}`}>
             <CardContent className="flex items-start gap-3 p-4">
-              <div
-                className={`flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors duration-150 ${
-                  tool.comingSoon
-                    ? "bg-muted text-muted-foreground"
-                    : "bg-primary/10 text-primary group-hover:bg-primary/20"
-                }`}
-              >
+              <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors duration-150 ${tool.comingSoon ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary group-hover:bg-primary/20"}`}>
                 <ToolIcon name={tool.icon} className="size-5" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-semibold">{tool.name}</h3>
-                  {tool.comingSoon && (
-                    <Badge variant="secondary" className="text-[10px]">
-                      Soon
-                    </Badge>
-                  )}
+                  {tool.comingSoon && <Badge variant="secondary" className="text-[10px]">Soon</Badge>}
                 </div>
-                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                  {tool.description}
-                </p>
+                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{tool.description}</p>
               </div>
             </CardContent>
           </Card>

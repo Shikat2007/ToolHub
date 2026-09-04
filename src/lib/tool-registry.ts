@@ -2,17 +2,19 @@ export interface ToolDef {
   id: string;
   name: string;
   description: string;
-  icon: string; // Lucide icon name
+  icon: string;
   category: ToolCategory;
-  /**
-   * Route key matching the lazy-loaded component in Dashboard.
-   * When adding a new tool, add a case in Dashboard's tool renderer.
-   */
   routeKey?: string;
   comingSoon?: boolean;
 }
 
-export type ToolCategory = "pdf" | "scan" | "media" | "future";
+export type ToolCategory =
+  | "pdf"
+  | "scan"
+  | "image"
+  | "text"
+  | "utility"
+  | "media";
 
 export interface CategoryDef {
   id: ToolCategory;
@@ -21,14 +23,16 @@ export interface CategoryDef {
 }
 
 export const categories: CategoryDef[] = [
-  { id: "pdf", label: "PDF Tools", icon: "FileText" },
+  { id: "pdf", label: "PDF & Document", icon: "FileText" },
   { id: "scan", label: "Document Scanner", icon: "ScanLine" },
-  { id: "media", label: "Media Downloaders", icon: "Download" },
-  { id: "future", label: "Future Tools", icon: "Sparkles" },
+  { id: "image", label: "Image & Photo", icon: "Image" },
+  { id: "text", label: "Text & Productivity", icon: "Type" },
+  { id: "utility", label: "Daily Utilities", icon: "Wrench" },
+  { id: "media", label: "Media Tools", icon: "Download" },
 ];
 
 export const tools: ToolDef[] = [
-  // ── PDF Tools ──────────────────────────────────────────────
+  // ── PDF & Document ─────────────────────────────────────────
   {
     id: "merge-pdf",
     name: "Merge PDF",
@@ -59,7 +63,7 @@ export const tools: ToolDef[] = [
     description: "Convert PDF pages to PNG or JPEG images.",
     icon: "Image",
     category: "pdf",
-    comingSoon: true,
+    routeKey: "pdf-to-image",
   },
 
   // ── Document Scanner ───────────────────────────────────────
@@ -72,42 +76,94 @@ export const tools: ToolDef[] = [
     category: "scan",
     routeKey: "doc-scanner",
   },
-
-  // ── Media Downloaders ──────────────────────────────────────
   {
-    id: "fb-downloader",
-    name: "Facebook Downloader",
-    description: "Download Facebook videos in SD or HD quality.",
-    icon: "Facebook",
-    category: "media",
-    comingSoon: true,
+    id: "ocr",
+    name: "Image to Text",
+    description: "Extract readable text from images using OCR.",
+    icon: "ScanText",
+    category: "scan",
+    routeKey: "ocr",
   },
+
+  // ── Image & Photo ──────────────────────────────────────────
+  {
+    id: "image-compress",
+    name: "Image Compressor",
+    description: "Reduce image file size with quality control.",
+    icon: "Shrink",
+    category: "image",
+    routeKey: "image-compress",
+  },
+  {
+    id: "image-resize",
+    name: "Image Resizer",
+    description: "Resize and crop images with aspect ratio presets.",
+    icon: "Crop",
+    category: "image",
+    routeKey: "image-resize",
+  },
+  {
+    id: "image-convert",
+    name: "Image Format Converter",
+    description: "Convert between JPG, PNG, and WebP formats.",
+    icon: "ArrowRightLeft",
+    category: "image",
+    routeKey: "image-convert",
+  },
+
+  // ── Text & Productivity ────────────────────────────────────
+  {
+    id: "text-counter",
+    name: "Word Counter",
+    description: "Count words, characters, sentences, and paragraphs.",
+    icon: "Hash",
+    category: "text",
+    routeKey: "text-counter",
+  },
+  {
+    id: "text-case",
+    name: "Text Case Converter",
+    description: "Convert text to UPPERCASE, lowercase, Title Case, and more.",
+    icon: "CaseSensitive",
+    category: "text",
+    routeKey: "text-case",
+  },
+
+  // ── Daily Utilities ────────────────────────────────────────
+  {
+    id: "qr-code",
+    name: "QR Code Generator",
+    description: "Generate and scan QR codes from text or images.",
+    icon: "QrCode",
+    category: "utility",
+    routeKey: "qr-code",
+  },
+  {
+    id: "password-gen",
+    name: "Password Generator",
+    description: "Generate strong, customizable passwords.",
+    icon: "KeyRound",
+    category: "utility",
+    routeKey: "password-gen",
+  },
+
+  // ── Media Tools ────────────────────────────────────────────
   {
     id: "video-downloader",
-    name: "Universal Downloader",
+    name: "Video Downloader",
     description:
-      "Download videos from YouTube, Instagram, TikTok and more.",
+      "Download videos from YouTube, Instagram, TikTok, and more.",
     icon: "Globe",
     category: "media",
-    routeKey: "media-downloader",
-  },
-
-  // ── Future ─────────────────────────────────────────────────
-  {
-    id: "ai-tools",
-    name: "AI Assistant",
-    description: "AI-powered tools for text generation and analysis.",
-    icon: "Brain",
-    category: "future",
-    comingSoon: true,
+    routeKey: "video-downloader",
   },
   {
-    id: "more-tools",
-    name: "More Tools",
-    description: "New tools are on the way. Stay tuned!",
-    icon: "Rocket",
-    category: "future",
-    comingSoon: true,
+    id: "audio-extractor",
+    name: "Audio Extractor",
+    description: "Extract audio tracks from video files.",
+    icon: "Music",
+    category: "media",
+    routeKey: "audio-extractor",
   },
 ];
 
