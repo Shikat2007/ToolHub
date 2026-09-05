@@ -1,103 +1,56 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
 import {
-  Wrench,
-  FileText,
-  Combine,
-  Scissors,
-  Minimize2,
-  Image,
-  ArrowRight,
-  Zap,
-  Lock,
-  Layers,
-  Terminal,
-  ScanLine,
-  Download,
-  Calculator,
-  Code,
-  Shield,
+  Wrench, ArrowRight, Zap, Lock, Layers, Terminal,
+  FileText, ScanLine, Image, Calculator, Code, Download, Shield, Gauge,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { categories, tools } from "@/lib/tool-registry";
 
-const categoryHighlights = [
-  {
-    icon: FileText,
-    label: "PDF Tools",
-    tools: ["Merge", "Split", "Compress", "PDF to Image"],
-    color: "text-blue-500",
-    bg: "bg-blue-500/10",
-  },
-  {
-    icon: ScanLine,
-    label: "Scanner & OCR",
-    tools: ["Document Scanner", "Image to Text"],
-    color: "text-emerald-500",
-    bg: "bg-emerald-500/10",
-  },
-  {
-    icon: Image,
-    label: "Image Tools",
-    tools: ["Compress", "Resize", "Convert"],
-    color: "text-purple-500",
-    bg: "bg-purple-500/10",
-  },
-  {
-    icon: Calculator,
-    label: "Calculators",
-    tools: ["Age", "Percentage", "Unit", "BMI"],
-    color: "text-amber-500",
-    bg: "bg-amber-500/10",
-  },
-  {
-    icon: Code,
-    label: "Developer",
-    tools: ["JSON", "Base64", "Markdown", "Hash"],
-    color: "text-cyan-500",
-    bg: "bg-cyan-500/10",
-  },
-  {
-    icon: Download,
-    label: "Media",
-    tools: ["Video Downloader", "Audio Extractor"],
-    color: "text-rose-500",
-    bg: "bg-rose-500/10",
-  },
-  {
-    icon: Shield,
-    label: "Network & Utilities",
-    tools: ["MAC Lookup", "Subnet Calc", "UUID", "Device Info"],
-    color: "text-indigo-500",
-    bg: "bg-indigo-500/10",
-  },
-];
+const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  "pdf": FileText, "scan": ScanLine, "image": Image, "text": Layers, "utility": Wrench,
+  "media": Download, "calculator": Calculator, "developer": Code, "creator": Terminal, "network": Shield,
+};
+
+const categoryTint: Record<string, { bg: string; fg: string }> = {
+  pdf: { bg: "bg-blue-500/10", fg: "text-blue-600 dark:text-blue-400" },
+  scan: { bg: "bg-emerald-500/10", fg: "text-emerald-600 dark:text-emerald-400" },
+  image: { bg: "bg-violet-500/10", fg: "text-violet-600 dark:text-violet-400" },
+  text: { bg: "bg-amber-500/10", fg: "text-amber-600 dark:text-amber-400" },
+  utility: { bg: "bg-teal-500/10", fg: "text-teal-600 dark:text-teal-400" },
+  media: { bg: "bg-rose-500/10", fg: "text-rose-600 dark:text-rose-400" },
+  calculator: { bg: "bg-orange-500/10", fg: "text-orange-600 dark:text-orange-400" },
+  developer: { bg: "bg-cyan-500/10", fg: "text-cyan-600 dark:text-cyan-400" },
+  creator: { bg: "bg-pink-500/10", fg: "text-pink-600 dark:text-pink-400" },
+  network: { bg: "bg-indigo-500/10", fg: "text-indigo-600 dark:text-indigo-400" },
+};
 
 const features = [
   {
     icon: Zap,
-    title: "Zero Latency",
+    title: "Zero latency",
     description:
-      "Every operation runs directly in the browser. No round trips to a server, no queues, no waiting.",
+      "Every operation runs directly in your browser. No round trips to a server, no queues, no waiting.",
   },
   {
     icon: Lock,
-    title: "Nothing Leaves Your Machine",
+    title: "Nothing leaves your machine",
     description:
       "Files are processed locally and never uploaded anywhere. What happens in Tool Hub stays in Tool Hub.",
   },
   {
-    icon: Layers,
-    title: "31 Tools, One Interface",
+    icon: Gauge,
+    title: "No keys, no accounts",
     description:
-      "PDF workflows, image editing, developer utilities, calculators, and network tools — all unified.",
+      "No API keys, no sign-ups, no tracking. Open the dashboard and every tool is ready to work.",
   },
 ];
 
 const stats = [
-  { value: "31", label: "Active Tools" },
-  { value: "10", label: "Categories" },
-  { value: "0", label: "Server Calls" },
-  { value: "100%", label: "Client-Side" },
+  { value: String(tools.length), label: "Active tools" },
+  { value: String(categories.length), label: "Categories" },
+  { value: "0", label: "Server calls" },
+  { value: "100%", label: "Client-side" },
 ];
 
 const fadeUp = {
@@ -117,15 +70,9 @@ export default function Landing() {
             <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <Wrench className="size-4" />
             </div>
-            <span className="text-base font-bold tracking-tight">
-              Tool Hub
-            </span>
+            <span className="text-base font-bold tracking-tight">Tool Hub</span>
           </div>
-          <Button
-            onClick={() => navigate("/dashboard")}
-            size="sm"
-            className="cursor-pointer gap-1.5"
-          >
+          <Button onClick={() => navigate("/dashboard")} size="sm" className="cursor-pointer gap-1.5">
             Open Dashboard
             <ArrowRight className="size-3.5" />
           </Button>
@@ -134,7 +81,6 @@ export default function Landing() {
 
       {/* Hero */}
       <section className="relative overflow-hidden pt-32 pb-20">
-        {/* Gradient glow */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute left-1/2 top-0 h-[500px] w-[700px] -translate-x-1/2 -translate-y-1/4 rounded-full bg-primary/8 blur-[120px]" />
         </div>
@@ -162,9 +108,9 @@ export default function Landing() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-muted-foreground"
           >
-            A unified, client-side toolkit for the team. PDF workflows, image
-            processing, developer utilities, and network tools — all running
-            locally in your browser.
+            A unified, client-side toolkit for the team. PDF workflows, image processing,
+            developer utilities, network diagnostics — {tools.length} real tools running locally
+            in your browser, organized into {categories.length} focused categories.
           </motion.p>
 
           <motion.div
@@ -197,19 +143,15 @@ export default function Landing() {
                 transition={{ duration: 0.4 }}
                 className="text-center"
               >
-                <p className="text-2xl font-bold tracking-tight text-primary">
-                  {stat.value}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {stat.label}
-                </p>
+                <p className="text-2xl font-bold tracking-tight text-primary">{stat.value}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{stat.label}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Categories Grid */}
+      {/* Category portals */}
       <section className="py-20">
         <div className="mx-auto max-w-5xl px-6">
           <motion.div
@@ -220,56 +162,38 @@ export default function Landing() {
             className="mb-12 text-center"
           >
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              Everything your team needs
+              Browse by category
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              31 fully active tools across 10 categories — no placeholders,
-              no coming soon.
+              {tools.length} fully active tools across {categories.length} categories —
+              no placeholders, no coming soon.
             </p>
           </motion.div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {categoryHighlights.map((cat, i) => (
-              <motion.div
-                key={cat.label}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-60px" }}
-                transition={{ duration: 0.4, delay: i * 0.05 }}
-                whileHover={{ y: -2, scale: 1.01 }}
-                className="cursor-pointer rounded-2xl border border-border/60 bg-card p-5 transition-all hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
-                onClick={() => navigate("/dashboard")}
-              >
-                <div
-                  className={`mb-3 flex size-9 items-center justify-center rounded-xl ${cat.bg}`}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {categories.map((cat, i) => {
+              const Icon = categoryIcons[cat.icon] ?? Wrench;
+              const tint = categoryTint[cat.id];
+              const count = tools.filter((t) => t.category === cat.id).length;
+              return (
+                <motion.button
+                  key={cat.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.4, delay: i * 0.04 }}
+                  whileHover={{ y: -2, scale: 1.01 }}
+                  className="cursor-pointer rounded-2xl border border-border/60 bg-card p-4 text-left transition-all hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
+                  onClick={() => navigate("/dashboard")}
                 >
-                  <cat.icon className={`size-5 ${cat.color}`} />
-                </div>
-                <h3 className="text-sm font-semibold">{cat.label}</h3>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {cat.tools.join(" · ")}
-                </p>
-              </motion.div>
-            ))}
-
-            {/* Coming soon card */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.4, delay: 0.35 }}
-              className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/60 p-5 text-center"
-            >
-              <div className="mb-3 flex size-9 items-center justify-center rounded-xl bg-muted">
-                <Wrench className="size-5 text-muted-foreground" />
-              </div>
-              <h3 className="text-sm font-semibold text-muted-foreground">
-                More coming soon
-              </h3>
-              <p className="mt-1 text-xs text-muted-foreground/60">
-                Easily extensible modular architecture
-              </p>
-            </motion.div>
+                  <div className={`mb-3 flex size-9 items-center justify-center rounded-xl ${tint.bg}`}>
+                    <Icon className={`size-5 ${tint.fg}`} />
+                  </div>
+                  <h3 className="text-sm font-semibold">{cat.label}</h3>
+                  <p className="mt-1 text-[11px] text-muted-foreground">{count} tools</p>
+                </motion.button>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -284,9 +208,7 @@ export default function Landing() {
             transition={{ duration: 0.4 }}
             className="mb-12 text-center"
           >
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              Why Tool Hub?
-            </h2>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Why Tool Hub?</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Purpose-built for how our team actually works.
             </p>
@@ -305,12 +227,8 @@ export default function Landing() {
                   <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <feature.icon className="size-5" />
                   </div>
-                  <h3 className="mb-1.5 text-sm font-semibold">
-                    {feature.title}
-                  </h3>
-                  <p className="text-xs leading-relaxed text-muted-foreground">
-                    {feature.description}
-                  </p>
+                  <h3 className="mb-1.5 text-sm font-semibold">{feature.title}</h3>
+                  <p className="text-xs leading-relaxed text-muted-foreground">{feature.description}</p>
                 </div>
               </motion.div>
             ))}
@@ -327,9 +245,7 @@ export default function Landing() {
             viewport={{ once: true }}
             transition={{ duration: 0.4 }}
           >
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              Ready to go?
-            </h2>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Ready to go?</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Jump straight in — no onboarding, no sign-up, no friction.
             </p>
@@ -338,8 +254,8 @@ export default function Landing() {
               size="lg"
               className="mt-6 cursor-pointer gap-2 px-7 text-sm font-medium shadow-lg shadow-primary/20"
             >
-              <FileText className="size-4" />
               Open Tool Hub
+              <ArrowRight className="size-4" />
             </Button>
           </motion.div>
         </div>
