@@ -16,20 +16,21 @@ export type ToolCategory =
 export interface CategoryDef {
   id: ToolCategory;
   label: string;
+  description: string;
   icon: string;
 }
 
 export const categories: CategoryDef[] = [
-  { id: "pdf", label: "PDF & Document", icon: "FileText" },
-  { id: "scan", label: "Document Scanner", icon: "ScanLine" },
-  { id: "image", label: "Image & Photo", icon: "Image" },
-  { id: "text", label: "Text & Productivity", icon: "Type" },
-  { id: "utility", label: "Daily Utilities", icon: "Wrench" },
-  { id: "media", label: "Media Tools", icon: "Download" },
-  { id: "calculator", label: "Calculators", icon: "Calculator" },
-  { id: "developer", label: "Developer Tools", icon: "Code" },
-  { id: "creator", label: "Content Creator", icon: "FilePlus" },
-  { id: "network", label: "Network & Utilities", icon: "Shield" },
+  { id: "pdf", label: "PDF & Documents", description: "Merge, split, compress and convert PDF files — all inside your browser.", icon: "FileText" },
+  { id: "scan", label: "Scanner & OCR", description: "Turn your camera into a document scanner and extract text from images.", icon: "ScanLine" },
+  { id: "image", label: "Image Tools", description: "Compress, resize and convert images with pixel-perfect control.", icon: "Image" },
+  { id: "text", label: "Text & Productivity", description: "Count, analyze and transform text in real time.", icon: "Type" },
+  { id: "utility", label: "Daily Utilities", description: "QR codes, strong passwords and other everyday essentials.", icon: "Wrench" },
+  { id: "media", label: "Media Tools", description: "Resolve video links and extract audio from your files.", icon: "Download" },
+  { id: "calculator", label: "Calculators", description: "Age, percentage, BMI and unit conversions — instant answers.", icon: "Calculator" },
+  { id: "developer", label: "Developer Tools", description: "Format JSON, encode data, hash strings and preview Markdown.", icon: "Code" },
+  { id: "creator", label: "Content Creator", description: "Compare texts and generate dummy content in one click.", icon: "FilePlus" },
+  { id: "network", label: "Network & Security", description: "Speed tests, subnet math, MAC lookups and password analysis.", icon: "Shield" },
 ];
 
 export const tools: ToolDef[] = [
@@ -46,7 +47,7 @@ export const tools: ToolDef[] = [
   { id: "text-case", name: "Text Case Converter", description: "Convert text to UPPERCASE, lowercase, Title Case, and more.", icon: "CaseSensitive", category: "text", routeKey: "text-case" },
   { id: "qr-code", name: "QR Code Generator", description: "Generate and scan QR codes from text or images.", icon: "QrCode", category: "utility", routeKey: "qr-code" },
   { id: "password-gen", name: "Password Generator", description: "Generate strong, customizable passwords.", icon: "KeyRound", category: "utility", routeKey: "password-gen" },
-  { id: "video-downloader", name: "Video Downloader", description: "Download videos from YouTube, Instagram, TikTok, and more.", icon: "Globe", category: "media", routeKey: "video-downloader" },
+  { id: "video-downloader", name: "Video Downloader", description: "Resolve video links, download direct media files, and open platform downloads.", icon: "Globe", category: "media", routeKey: "video-downloader" },
   { id: "audio-extractor", name: "Audio Extractor", description: "Extract audio tracks from video files.", icon: "Music", category: "media", routeKey: "audio-extractor" },
   { id: "age-calc", name: "Age Calculator", description: "Compute exact age in years, months, days, and hours.", icon: "Cake", category: "calculator", routeKey: "age-calc" },
   { id: "percent-calc", name: "Percentage Calculator", description: "Calculate discounts, markups, and ratio percentages.", icon: "Percent", category: "calculator", routeKey: "percent-calc" },
@@ -64,6 +65,7 @@ export const tools: ToolDef[] = [
   { id: "uuid-gen", name: "UUID Generator", description: "Generate random v4 UUIDs with one-click copy.", icon: "Hash", category: "network", routeKey: "uuid-gen" },
   { id: "url-encoder", name: "URL Encoder / Decoder", description: "Encode and decode URLs and query strings.", icon: "Link", category: "network", routeKey: "url-encoder" },
   { id: "password-strength", name: "Password Strength Meter", description: "Analyze password entropy, complexity, and weaknesses.", icon: "ShieldCheck", category: "network", routeKey: "password-strength" },
+  { id: "speed-test", name: "Internet Speed Test", description: "Measure live ping, jitter and download speed with real-time results.", icon: "Gauge", category: "network", routeKey: "speed-test" },
 ];
 
 export function getToolsByCategory(category: ToolCategory): ToolDef[] {
